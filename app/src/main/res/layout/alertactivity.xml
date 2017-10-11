@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/backgroundtitle">
+        <ImageView
+            android:id="@+id/alertactivity_back_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:src="@mipmap/login_back"
+            android:layout_centerVertical="true"
+            />
+        <TextView
+            android:id="@+id/alertactivity_alertname_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="消息列表"
+            android:textSize="@dimen/text_size_18"
+            android:textColor="@color/black_bg"
+            android:layout_centerInParent="true"/>
+        <Button
+            android:id="@+id/alertactivity_clear_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="清空"
+            android:background="#00000000"
+            android:textColor="@color/black_bg"
+            android:textSize="@dimen/text_size_14"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <com.baoyz.swipemenulistview.SwipeMenuListView
+            android:id="@+id/alertactivity_alertlistview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.zhy.android.percent.support.PercentLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.zhy.android.percent.support.PercentRelativeLayout
+        android:id="@+id/devicedetail_item_rll"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_below="@+id/view_2">
+        <TextView
+            android:id="@+id/devicedetail_itemname_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="灯1"
+            android:textSize="@dimen/text_size_14"
+            android:textColor="@color/add_title_text_color"
+            android:layout_centerVertical="true"
+            app:layout_marginLeftPercent="5.1%"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/personal_more"
+            android:padding="@dimen/dp_size_5"
+            android:layout_alignParentRight="true"
+            app:layout_marginRightPercent="2.8%"
+            android:layout_centerVertical="true"/>
+        <View
+            android:id="@+id/view"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            app:layout_widthPercent="94.4%"
+            android:background="@color/color_mefragment_xian_EEEEEE"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"/>
+    </com.zhy.android.percent.support.PercentRelativeLayout>
+
+</com.zhy.android.percent.support.PercentLinearLayout>

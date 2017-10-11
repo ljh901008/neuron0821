@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <RelativeLayout
+        android:id="@+id/infraredtransponder_item_device_rll"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_size_48"
+        android:layout_marginTop="@dimen/dp_size_10">
+        <TextView
+            android:id="@+id/infraredtransponder_item_kname_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="可控设备:"
+            android:textSize="@dimen/text_size_16"
+            android:textColor="@color/white"
+            android:layout_marginLeft="@dimen/dp_size_18"
+            android:layout_centerVertical="true"/>
+        <TextView
+            android:id="@+id/infraredtransponder_item_devicename_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/infraredtransponder_item_kname_tv"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_10"
+            android:text="设备名"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_16"
+            android:background="@color/white_00000000"/>
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_size_1"
+            android:layout_alignParentBottom="true"
+            android:background="@color/white_0.3"
+            android:layout_marginLeft="@dimen/dp_size_15"
+            android:layout_marginRight="@dimen/dp_size_15"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:src="@mipmap/home_air_more"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="@dimen/dp_size_15"/>
+    </RelativeLayout>
+
+</LinearLayout>

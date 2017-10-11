@@ -1,0 +1,105 @@
+apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda' //lambda
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion '25.0.0'
+
+    defaultConfig {
+        applicationId "neuron.com.comneuron"
+        minSdkVersion 14
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0.0"
+        multiDexEnabled true
+        ndk {
+            //选择要添加的对应cpu类型的.so库。
+            abiFilters 'armeabi', 'armeabi-v7a', 'armeabi-v8a'
+            // 还可以添加 'x86', 'x86_64', 'mips', 'mips64'
+        }
+        //极光推送
+        manifestPlaceholders = [
+                JPUSH_PKGNAME : applicationId,
+                JPUSH_APPKEY : "4b889b82a72157186ae4817e", //JPush上注册的包名对应的appkey.
+                JPUSH_CHANNEL : "developer-default", //暂时填写默认值即可.
+        ]
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets{
+        main{
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+    //修改打包后的apk名称
+    android.applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def outputFile = output.outputFile
+            def fileName
+            if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                if (variant.buildType.name.equals('release')) {
+                    fileName = "Neuron.apk"
+                } else if (variant.buildType.name.equals('debug')) {
+                    fileName = "Neuron.apk"
+                }
+                output.outputFile = new File(outputFile.parent, fileName)
+            }
+        }
+    }
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
+}
+allprojects {
+    repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
+}
+
+dependencies {
+    compile fileTree(include: '*.jar', dir: 'libs')
+    compile files('libs/xUtils-3.3.34.jar')
+    compile 'com.zhy:percent-support-extends:1.0.1'
+    testCompile 'junit:junit:4.12'
+    compile project(':library')
+    compile files('libs/core-3.0.0.jar')
+    compile files('libs/EZOpenSDK_V4.5.0.20170605.jar')
+    compile project(':swipeMenuListView')
+    compile 'com.jph.takephoto:takephoto_library:4.0.2'
+    //takephoto
+    compile 'top.zibin:Luban:1.0.9'
+    compile 'cn.jiguang.sdk:jpush:3.0.7'
+    // 极光 此处以JPush 3.0.3 版本为例。
+    compile 'cn.jiguang.sdk:jcore:1.1.5'
+    // 极光 此处以JCore 1.1.1 版本为例。
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    //compile 'com.android.support:appcompat-v7:25.+'
+    compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
+    //bug
+    //debugCompile 'com.squareup.leakcanary:leakcanary-android:1.5.1'
+    //releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
+    //testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'de.hdodenhof:circleimageview:2.1.0'
+    compile files('libs/smartlib.jar')
+    //音响
+    //retrofit
+    compile 'com.squareup.retrofit2:retrofit-converters:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.0.2'
+    compile 'com.squareup.retrofit2:adapter-rxjava:2.1.0'
+    compile 'com.squareup.okhttp3:okhttp:3.4.1'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.4.1'
+    //rxjava
+    compile 'io.reactivex:rxjava:1.1.5'
+    compile 'io.reactivex:rxandroid:1.2.0'
+    //eventbus
+    compile 'org.greenrobot:eventbus:3.0.0'
+    compile 'commons-codec:commons-codec:20041127.091804'
+}

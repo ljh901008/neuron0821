@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@mipmap/home_bg">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:elevation="2dp">
+
+        <LinearLayout
+            android:id="@+id/scenefragment_selecthome_rll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/whiteframe"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/scenefragment_scene_btn"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@color/white_00000000"
+                android:text="设备"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_16"/>
+            <ImageView
+                android:layout_width="1dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:background="@color/white"/>
+            <Button
+                android:id="@+id/scenefragment_set_btn"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@color/white_00000000"
+                android:text="场景"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_16"/>
+        </LinearLayout>
+
+    </RelativeLayout>
+    <neuron.com.view.ChildViewPager
+        android:id="@+id/scene_viewpage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+    </neuron.com.view.ChildViewPager>
+    <RelativeLayout
+        android:id="@+id/scene_fragment_rll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </RelativeLayout>
+</LinearLayout>

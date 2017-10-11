@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_size_57">
+        <ImageView
+            android:id="@+id/devicesetfragment_item_deviceimg_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/set_up_switch"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_15"/>
+        <TextView
+            android:id="@+id/devicesetfragment_item_devicename_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/devicesetfragment_item_deviceimg_iv"
+            android:text="开关"
+            android:textSize="@dimen/text_size_16"
+            android:textColor="@color/white"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_20"/>
+        <ImageView
+            android:id="@+id/devicesetfragment_item_more_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="@dimen/dp_size_15"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/home_air_more"/>
+        <TextView
+            android:id="@+id/devicesetfragment_item_roomname_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="房间名"
+            android:textSize="@dimen/text_size_16"
+            android:textColor="@color/white"
+            android:layout_toLeftOf="@+id/devicesetfragment_item_more_iv"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="@dimen/dp_size_10"/>
+    </RelativeLayout>
+
+</LinearLayout>

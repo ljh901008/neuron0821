@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/alert_item_time_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="时间"
+            android:textColor="@color/black_bg"
+            android:textSize="@dimen/text_size_16"
+            android:layout_marginTop="@dimen/dp_size_10"
+            android:layout_marginLeft="@dimen/dp_size_15"/>
+        <TextView
+            android:id="@+id/alert_item_content_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/alert_item_time_tv"
+            android:text="内容家乐福哦艾丝凡来看"
+            android:textColor="@color/black_bg"
+            android:textSize="@dimen/text_size_14"
+            android:layout_marginTop="@dimen/dp_size_5"
+            android:layout_marginLeft="@dimen/dp_size_15"/>
+        <View
+            android:id="@+id/alert_item_view"
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/text_gray"
+            android:layout_below="@+id/alert_item_content_tv"
+            android:layout_marginTop="@dimen/dp_size_5"
+            android:layout_marginLeft="@dimen/dp_size_15"/>
+    </RelativeLayout>
+
+</LinearLayout>

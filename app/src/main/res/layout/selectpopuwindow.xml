@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/devicelistbg">
+        <Button
+            android:id="@+id/selectpopuwindow_adddevice_btn"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="添加设备"
+            android:textSize="@dimen/text_size_14"
+            android:textColor="@color/text_gray"
+            android:background="@color/white"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_size_1"
+            android:background="@color/text_gray"/>
+        <Button
+            android:id="@+id/selectpopuwindow_addscene_btn"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="添加场景"
+            android:textSize="@dimen/text_size_14"
+            android:textColor="@color/text_gray"
+            android:background="@color/white"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_size_1"
+            android:background="@color/text_gray"/>
+        <Button
+            android:id="@+id/selectpopuwindow_shareaccount_btn"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="添加分享码"
+            android:textSize="@dimen/text_size_14"
+            android:textColor="@color/text_gray"
+            android:background="@color/white"/>
+
+    </LinearLayout>
+
+</LinearLayout>

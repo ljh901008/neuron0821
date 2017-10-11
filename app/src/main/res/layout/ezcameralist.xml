@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_size_44"
+        android:layout_marginTop="@dimen/dp_size_44"
+        android:text="获取摄像头列表"
+        android:textSize="@dimen/text_size_18"
+        android:textColor="@color/textcolor_bulue_2c85ff"
+        android:id="@+id/ezcameralist_list_btn"/>
+
+</LinearLayout>

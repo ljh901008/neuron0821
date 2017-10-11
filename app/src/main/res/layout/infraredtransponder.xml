@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@mipmap/home_bg"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/infraredtransponder_top_rll"
+        android:layout_width="match_parent"
+        android:layout_height="48dp">
+
+        <ImageButton
+            android:id="@+id/infraredtransponder_back_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_5"
+            android:background="#00000000"
+            android:padding="@dimen/dp_size_10"
+            android:src="@mipmap/home_back" />
+
+        <TextView
+            android:id="@+id/infraredtransponder_titlename_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:text="红外转发编辑"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_18" />
+
+        <Button
+            android:id="@+id/infraredtransponder_fonfirm_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="#00000000"
+            android:text="确定"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_18" />
+    </RelativeLayout>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/dp_size_48"
+                android:layout_marginTop="@dimen/dp_size_20">
+
+                <TextView
+                    android:id="@+id/infraredtransponder_dname_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="@dimen/dp_size_18"
+                    android:text="设备名称:"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_16" />
+
+                <EditText
+                    android:id="@+id/infraredtransponder_devicename_ed"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/dp_size_33"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="@dimen/dp_size_10"
+                    android:layout_toRightOf="@+id/infraredtransponder_dname_tv"
+                    android:background="@color/white_00000000"
+                    android:hint="设备名称"
+                    android:textColor="@color/white"
+                    android:textColorHint="@color/white"
+                    android:textSize="@dimen/text_size_16" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/dp_size_1"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginLeft="@dimen/dp_size_15"
+                    android:layout_marginRight="@dimen/dp_size_15"
+                    android:background="@color/white_0.3" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/infraredtransponder_roomname_rll"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/dp_size_48"
+                android:layout_marginTop="@dimen/dp_size_10">
+
+                <TextView
+                    android:id="@+id/infraredtransponder_rname_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="@dimen/dp_size_18"
+                    android:text="房间名称:"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_16" />
+
+                <TextView
+                    android:id="@+id/infraredtransponder_roomname_ed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="@dimen/dp_size_10"
+                    android:layout_toRightOf="@+id/infraredtransponder_rname_tv"
+                    android:background="@color/white_00000000"
+                    android:text="房间名"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_16" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/dp_size_1"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginLeft="@dimen/dp_size_15"
+                    android:layout_marginRight="@dimen/dp_size_15"
+                    android:background="@color/white_0.3" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginRight="@dimen/dp_size_15"
+                    android:src="@mipmap/home_air_more" />
+            </RelativeLayout>
+
+            <com.baoyz.swipemenulistview.SwipeMenuListView
+                android:id="@+id/infraredtransponder_listview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/dp_size_20">
+
+                <ImageButton
+                    android:id="@+id/infraredtransponder_add_itbn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:background="@color/white_00000000"
+                    android:src="@mipmap/air_temperature_add" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/infraredtransponder_add_itbn"
+                    android:layout_marginTop="@dimen/dp_size_20"
+                    android:text="添加可控设备"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_16" />
+            </RelativeLayout>
+</LinearLayout>

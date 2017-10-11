@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <RelativeLayout
+        android:layout_width="187.5dp"
+        android:layout_height="33dp">
+        <TextView
+            android:id="@+id/shouye_popuwindow_item_homename_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="卧室"
+            android:textColor="@color/add_title_text_color"
+            android:textSize="@dimen/text_size_14"
+            android:layout_marginLeft="@dimen/dp_size_20"
+            android:layout_centerVertical="true"/>
+        <ImageView
+            android:id="@+id/shouye_popuwindow_item_select_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:padding="10dp"
+            android:src="@mipmap/my_management_select"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="@dimen/dp_size_20"/>
+
+    </RelativeLayout>
+</RelativeLayout>

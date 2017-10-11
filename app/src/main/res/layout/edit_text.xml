@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="编辑内容" />
+
+    <Button
+        android:id="@+id/btn_retract"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:background="@null"
+        android:gravity="center"
+        android:text="收起" />
+    <EditText
+        android:id="@+id/et_edit_sound"
+        android:layout_below="@id/tv_title"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:background="@null"
+        android:gravity="top"
+        android:layout_marginTop="16dp"
+        android:imeOptions="actionSend"
+        android:inputType="text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</RelativeLayout>

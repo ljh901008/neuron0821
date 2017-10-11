@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="text_white_FFFFFF">#FFFFFF</color>
+    <color name="text_black_333333">#333333</color>
+    <color name="color_login_account_bottom">#DCDCDC</color>
+    <color name="login_button_1DDCBF">#1DDCBF</color>
+    <color name="login_button_405680">#405680</color>
+    <color name="login_ed">#B3B6C0</color>
+
+    <color name="login_gray">#353544</color>
+
+    <color name="white">#ffffff</color>
+
+    <color name="white_66">#66ffffff</color>
+    <color name="white_00000000">#00000000</color>
+
+    <color name="white_0.3">#4CFFFFFF</color>
+    <color name="white_0.1">#1AFFFFFF</color>
+    <color name="white_0.4">#68FFFFFF</color>
+    <color name="white_0.8">#CCFFFFFF</color>
+    <color name="roomfg_scene_no">#28ffffff</color>
+
+    <color name="login_forget_gray">#B6B7BD</color>
+
+    <color name="red">#FF0000</color>
+    <color name="red_1">#FE0101</color>
+
+    <color name="text_gray">#999999</color>
+
+    <color name="text_black">#333333</color>
+
+    <color name="text_9f9f9f">#9f9f9f</color>
+
+    <color name="background">#f8f8f8</color>
+
+    <color name="text_scenetitle_blue">#1C305E</color>
+
+    <color name="deviceinfo_item_gray">#333333</color>
+
+    <color name="deviceinfo_item_gray_rigth">#999999</color>
+
+    <color name="background_gray">#464659</color>
+
+    <color name="light_textgray">#848484</color>
+
+    <color name="light_textyellow">#FFD339</color>
+
+    <color name="bound_delete_red">#FF2233</color>
+
+    <color name="scene_item_blue">#69C9FD</color>
+
+    <color name="scene_item_orange">#FFA33C</color>
+
+    <color name="scene_item_turquoise">#AADE25</color>
+
+    <color name="scene_item_textred">#FF2323</color>
+
+    <color name="add_title_text_color">#666666</color>
+
+    <color name="help_link">#527ddb</color>
+
+    <color name="auto_tip_text">#888888</color>
+
+    <color name="transparent">#00ffffff</color>
+
+    <color name="line_color">#bebdbc</color>
+
+    <color name="gray_text">#adadad</color>
+
+    <color name="common_bg">#f0f0f3</color>
+
+    <color name="black_bg">#000000</color>
+
+    <color name="source_detection_btn_color">#48a9fb</color>
+
+    <color name="viewfinder_frame">#929292</color>
+
+    <color name="dark_bg_70p">#bb000000</color>
+
+    <color name="quality_focused_color">#448cf3</color>
+
+    <color name="application_bg">@color/common_bg</color>
+
+    <color name="titlebar_bg">#1DDCBF</color>
+
+    <color name="bottom_textcolor">#B4B4B4</color>
+
+    <color name="textcolor_bulue_2c85ff">#2C85FF</color>
+
+    <color name="textcolor_chengse_FF5123">#FF5123</color>
+
+    <color name="color_mefragment_xian_EEEEEE">#EEEEEE</color>
+    
+    <color name="adddevicebackground_CCF5EF">#CCF5EF</color>
+
+    <color name="scenebg_DBF9F4">#DBF9F4</color>
+
+    <color name="scenebg_biankuang_49E2CA">#49E2CA</color>
+
+    <color name="yellow">#FFD339</color>
+
+    <color name="text_green">#99FD00</color>
+    <color name="auto_blue_text">#2554bd</color>
+    <color name="common_sub_text">#888888</color>
+    <!--pm2.5色值-->
+    <color name="pm_1">#4EFE00</color>
+    <color name="pm_35">#80FF00</color>
+    <color name="pm_75">#C3F900</color>
+    <color name="pm_80">#F0E800</color>
+    <color name="pm_90">#F0B900</color>
+    <color name="pm_115">#F28D00</color>
+    <color name="pm_120">#F66200</color>
+    <color name="pm_135">#F81E00</color>
+    <color name="pm_150">#F80000</color>
+    <color name="pm_160">#D7020A</color>
+    <color name="pm_200">#BB011F</color>
+    <color name="pm_250">#A20033</color>
+    <color name="pm_275">#940039</color>
+    <color name="pm_300">#89002F</color>
+    <color name="pm_325">#810029</color>
+
+    <!--zxing扫描所需-->
+    <color name="contents_text">#ff000000</color>
+    <color name="encode_view">#ffffffff</color>
+    <color name="possible_result_points">#c0ffbd21</color> <!-- Android standard ICS color -->
+    <color name="result_minor_text">#ffc0c0c0</color>
+    <color name="result_points">#c099cc00</color> <!-- Android standard ICS color -->
+    <color name="result_text">#ffffffff</color>
+    <color name="result_view">#b0000000</color>
+    <color name="status_text">#ffffffff</color>
+    <color name="viewfinder_laser">#ffcc0000</color> <!-- Android standard ICS color -->
+    <color name="viewfinder_mask">#60000000</color>
+</resources>

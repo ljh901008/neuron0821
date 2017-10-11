@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/text_white_FFFFFF">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:elevation="4dp"
+        android:background="@drawable/backgroundtitle">
+
+        <ImageView
+            android:id="@+id/hand_add_device_activity_back_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/login_back"
+            android:padding="@dimen/dp_size_10"/>
+        <TextView
+            android:id="@+id/hand_add_device_activity_title_1_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_16"
+            android:layout_centerInParent="true"
+            android:text="手动输入"
+            android:textColor="@color/text_black"/>
+    </RelativeLayout>
+    <EditText
+        android:id="@+id/hand_add_device_activity_serial_ed"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_size_44"
+        android:layout_marginRight="@dimen/dp_size_10"
+        android:layout_marginLeft="@dimen/dp_size_10"
+        android:layout_marginTop="@dimen/dp_size_30"
+        android:hint="请输入序列号"
+        android:paddingLeft="@dimen/dp_size_5"
+        android:background="@null"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/color_login_account_bottom"
+        android:layout_marginRight="@dimen/dp_size_10"
+        android:layout_marginLeft="@dimen/dp_size_10"></View>
+    <Button
+        android:id="@+id/hand_add_device_activity_queren_btn"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/login_button"
+        android:layout_marginLeft="@dimen/dp_size_10"
+        android:layout_marginRight="@dimen/dp_size_10"
+        android:layout_marginTop="@dimen/dp_size_60"
+        android:text="完 成"
+        android:textSize="@dimen/dp_size_20"
+        android:textColor="@color/text_white_FFFFFF"/>
+
+</LinearLayout>

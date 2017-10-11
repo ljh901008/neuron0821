@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <RelativeLayout
+        android:id="@+id/roomfragment_sceneitem_scenebg_rll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@mipmap/scene_bg_unchecked">
+        <ImageView
+            android:id="@+id/roomfragment_sceneitem_image_iv"
+            android:layout_width="33dp"
+            android:layout_height="30dp"
+            android:layout_marginTop="@dimen/dp_size_15"
+            android:layout_centerHorizontal="true"
+            />
+        <TextView
+            android:id="@+id/roomfragment_sceneitem_scenename_tv"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:text="回家场景"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:layout_below="@+id/roomfragment_sceneitem_image_iv"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:layout_marginTop="7dp"
+            />
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/roomfragment_sceneitem_scenename_tv"
+            android:layout_centerHorizontal="true"
+            android:paddingBottom="@dimen/dp_size_3">
+            <ImageView
+                android:id="@+id/roomfragment_sceneitem_yuandian_iv"
+                android:layout_width="@dimen/dp_size_5"
+                android:layout_height="@dimen/dp_size_5"
+                android:src="@drawable/yuandian"
+                android:layout_centerVertical="true"
+                android:visibility="gone"/>
+            <TextView
+                android:id="@+id/roomfragment_sceneitem_scenetype_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/roomfragment_sceneitem_yuandian_iv"
+                android:layout_marginLeft="@dimen/dp_size_5"
+                android:text="未启用"
+                android:textColor="@color/white"
+                />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</LinearLayout>

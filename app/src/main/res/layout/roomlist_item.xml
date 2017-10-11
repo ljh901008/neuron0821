@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp">
+        <TextView
+            android:id="@+id/roomlist_item_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="卧室"
+            android:textColor="@color/add_title_text_color"
+            android:textSize="@dimen/text_size_14"
+            android:layout_marginLeft="@dimen/dp_size_20"
+            android:layout_centerVertical="true"/>
+        <ImageView
+            android:id="@+id/roomlist_item_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:padding="10dp"
+            android:src="@mipmap/home_selected"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="@dimen/dp_size_20"/>
+        <View
+            android:layout_width="670dp"
+            android:layout_height="@dimen/dp_size_1"
+            android:background="@color/color_mefragment_xian_EEEEEE"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"/>
+    </RelativeLayout>
+</LinearLayout>

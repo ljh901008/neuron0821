@@ -1,0 +1,82 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@mipmap/home_bg">
+
+    <RelativeLayout
+        android:id="@+id/activity_gesture_edit_top_rll"
+        android:layout_width="match_parent"
+        android:layout_height="48dp">
+        <ImageButton
+            android:id="@+id/activity_gesture_edit_back_iv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/home_back"
+            android:background="#00000000"
+            android:padding="@dimen/dp_size_10"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_5"/>
+        <TextView
+            android:id="@+id/scenetiming_titlename_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="设置手势密码"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_18"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"/>
+        <Button
+            android:id="@+id/activity_gesture_edit_fonfirm_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="跳过"
+            android:textSize="@dimen/text_size_18"
+            android:textColor="@color/white"
+            android:background="#00000000"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/gesture_tip_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/activity_gesture_edit_top_rll"
+        android:gravity="center"
+        android:orientation="vertical" >
+
+        <neuron.com.lock.activity.LockIndicator
+            android:id="@+id/lock_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip" />
+
+        <TextView
+            android:id="@+id/text_tip"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/set_gesture_pattern"
+            android:textColor="@color/white"
+            android:layout_marginTop="10dip" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/gesture_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/gesture_tip_layout"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dip" >
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/text_reset"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:layout_below="@id/gesture_container"
+        android:layout_marginTop="20dip"
+        android:textColor="#816E6A" />
+
+</RelativeLayout>

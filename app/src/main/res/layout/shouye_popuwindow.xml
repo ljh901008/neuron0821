@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="187.5dp"
+    android:layout_height="250dp"
+    android:background="@color/text_white_FFFFFF">
+    <RelativeLayout
+        android:id="@+id/shouye_popuwindow_quanbu_rll"
+        android:layout_below="@+id/shouye_popuwindow_addhome_fl"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_size_33">
+        <TextView
+            android:id="@+id/shouye_popuwindow_quanbu_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="全部"
+            android:textSize="@dimen/text_size_14"
+            android:textColor="@color/add_title_text_color"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_20"/>
+    </RelativeLayout>
+    <ListView
+        android:id="@+id/shouye_popuwindow_lv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/shouye_popuwindow_quanbu_rll"
+        android:divider="#00000000">
+    </ListView>
+
+    <RelativeLayout
+        android:id="@+id/shouye_popuwindow_addhome_fl"
+        android:layout_width="match_parent"
+        android:layout_height="33dp"
+        android:background="@color/white">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_20"
+            android:text="添加房间"
+            android:textColor="@color/add_title_text_color"
+            android:textSize="@dimen/text_size_14" />
+    </RelativeLayout>
+
+</RelativeLayout>

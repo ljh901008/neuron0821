@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/tv1"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="请选择房间"
+        android:textColor="@color/text_black"
+        android:textSize="@dimen/text_size_18"
+        android:gravity="center_vertical"
+        android:paddingLeft="@dimen/dp_size_10"/>
+    <View
+        android:id="@+id/view1"
+        android:layout_below="@+id/tv1"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/text_black"/>
+    <ListView
+        android:layout_below="@+id/view1"
+        android:id="@+id/adddevice_dialog_listview_lv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@null">
+    </ListView>
+    <FrameLayout
+        android:id="@+id/adddevice_dialog_listview_add_fl"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_below="@+id/adddevice_dialog_listview_lv"
+        >
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+            <ImageView
+                android:id="@+id/adddevice_dialog_listview_jiahao_iv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:src="@mipmap/home_add"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/adddevice_dialog_listview_jiahao_iv"
+                android:layout_marginLeft="@dimen/dp_size_10"
+                android:text="添加房间"
+                android:textSize="@dimen/text_size_16"
+                android:textColor="@color/add_title_text_color"/>
+        </RelativeLayout>
+    </FrameLayout>
+</RelativeLayout>

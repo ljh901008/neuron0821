@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@mipmap/home_bg">
+
+    <RelativeLayout
+        android:id="@+id/devicesetfragment_selectroom_rll"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_size_33">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="选择"
+            android:textSize="@dimen/text_size_14"
+            android:textColor="@color/white"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/dp_size_15" />
+
+        <TextView
+            android:id="@+id/devicesetfragment_roomname_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:text="房间"
+            android:textSize="@dimen/text_size_14"
+            android:textColor="@color/white"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="@dimen/dp_size_32" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/set_up_room"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="@dimen/dp_size_15"
+            android:layout_centerVertical="true" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_size_1"
+            android:background="@color/white_0.3"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="@dimen/dp_size_10"
+            android:layout_marginLeft="@dimen/dp_size_10" />
+    </RelativeLayout>
+
+    <com.handmark.pulltorefresh.library.PullToRefreshScrollView
+        xmlns:ptr="http://schemas.android.com/tools"
+        android:id="@+id/devicesetfragment_pullsv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        ptr:ptrAnimationStyle="flip"
+        ptr:ptrMode="both">
+
+        <com.baoyz.swipemenulistview.SwipeMenuListView
+            android:id="@+id/devicesetfragment_listview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </com.handmark.pulltorefresh.library.PullToRefreshScrollView>
+</LinearLayout>

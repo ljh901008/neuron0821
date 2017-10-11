@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp">
+    <ImageView
+        android:id="@+id/title_1_left_iv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:src="@mipmap/login_back"
+        android:layout_marginLeft="@dimen/dp_size_10"
+        android:padding="@dimen/dp_size_5"/>
+    <TextView
+        android:id="@+id/title_1_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_size_16"
+        android:layout_centerInParent="true"
+        android:text="@string/action_registe"/>
+    <TextView
+        android:id="@+id/title_1_right_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:text="cesh"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="@dimen/dp_size_10"
+        android:visibility="gone"
+        />
+    <ImageView
+        android:id="@+id/title_1_right_iv"
+        android:layout_width="@dimen/dp_size_22"
+        android:layout_height="@dimen/dp_size_22"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/dp_size_10"
+        android:layout_centerVertical="true"
+        android:visibility="gone"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@mipmap/titler_shade"
+        android:layout_alignParentBottom="true">
+    </View>
+</RelativeLayout>

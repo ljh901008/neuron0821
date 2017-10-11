@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="neuron.com.comneuron">
+
+    <uses-permission android:name="android.permission.READ_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <!-- 上网权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- wifi权限 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- 检查网络状态权限 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 萤石权限 -->
+    <uses-permission android:name="android.permission.RESTART_PACKAGES" />
+    <uses-permission android:name="android.permission.WRITE_OWNER_DATA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_LOGS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
+    <!-- 扫一扫所需权限 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Required -->
+    <permission
+        android:name="neuron.com.comneuron.permission.JPUSH_MESSAGE"
+        android:protectionLevel="signature" />
+
+    <!-- Required  一些系统要求的权限，如访问网络等，重复权限已删除-->
+    <uses-permission android:name="neuron.com.comneuron.permission.JPUSH_MESSAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_USER_PRESENT" />
+
+    <application
+        android:name="neuron.com.app.OgeApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/start_icon120"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        tools:replace="android:icon, android:theme">
+        <activity
+            android:name="neuron.com.login.Activity.WelcomePageActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!--  音响页面 -->
+        <activity android:name="neuron.com.room.Activity.HOPE_SongListActivity"/>
+        <service android:name="cn.nbhope.smarthome.smartlib.service.SocketService"/>
+        <!-- 登录界面 -->
+        <!-- mainActivityandroid:windowSoftInputMode设置当软键盘弹出的时候布局不被顶到上方 -->
+        <activity android:name="neuron.com.login.Activity.LoginActivity"
+            android:windowSoftInputMode="adjustPan|stateHidden"
+            android:launchMode="singleInstance"></activity>
+        <!--首页-->
+        <activity android:name=".MainActivity"
+            android:screenOrientation="portrait"/>
+        <!--用户协议-->
+       <activity android:name="neuron.com.login.Activity.UserAgreeMentActivity"/>
+        <!-- 注册 -->
+        <activity android:name="neuron.com.login.Activity.RegisterActivity"></activity>
+        <!--忘记密码-->
+        <activity android:name="neuron.com.login.Activity.ForgetPasswordActivity"></activity>
+        <!-- 手势密码验证 -->
+        <activity android:name="neuron.com.lock.activity.GestureEditActivity"></activity>
+        <!-- 手势密码设置 -->
+        <activity android:name="neuron.com.lock.activity.GestureVerifyActivity"></activity>
+        <!-- 修改密码-->
+        <activity android:name="neuron.com.set.Activity.ChangePassword"></activity>
+        <!--扫描页面-->
+        <activity android:name="com.karics.library.zxing.android.CaptureActivity"></activity>
+        <!--添加设备页面-->
+        <activity android:name="neuron.com.room.Activity.AddDeviceActivity"></activity>
+        <!--手动添加页面-->
+        <activity android:name="neuron.com.room.Activity.HandAddDeviceActivity"></activity>
+        <!-- 添加房间 -->
+        <activity android:name="neuron.com.room.Activity.AddRoomActivity"></activity>
+        <!-- 房间列表 -->
+        <activity android:name="neuron.com.room.Activity.RoomListActivity"></activity>
+        <!-- 灯 -->
+        <activity android:name="neuron.com.room.Activity.LightActivity"></activity>
+        <!-- 空气质量监测仪 -->
+        <activity android:name="neuron.com.room.Activity.AirQualityActivity"></activity>
+        <!-- 空气质量监测仪器编辑页面-->
+        <activity android:name="neuron.com.room.Activity.AirQualityEditActivity"
+            android:windowSoftInputMode="stateHidden"/>
+        <!--空气质量检测仪场景设定页面-->
+        <activity android:name="neuron.com.room.Activity.AirQualitySelectSceneActivity"/>
+        <!-- 绑定设置页面 -->
+        <activity android:name="neuron.com.room.Activity.BindSetActivity"></activity>
+        <!--开通萤石云服务页面-->
+        <activity android:name="neuron.com.room.Activity.EZ_OpenServiceActivity"/>
+        <!--萤石扫面添加结果页面-->
+        <activity android:name="neuron.com.room.Activity.EZ_CameraResultActiviry"/>
+        <!--萤石摄像头添加  第一步-->
+        <activity android:name="neuron.com.room.Activity.EZ_CameraFirstActivity"/>
+        <!--萤石摄像头添加  第二步-->
+        <activity android:name="neuron.com.room.Activity.EZ_CameraSecondActivity"/>
+        <!--萤石摄像头添加  第三步-->
+        <activity android:name="neuron.com.room.Activity.EZ_CameraThirdActivity"/>
+        <!--萤石摄像头播放页面-->
+        <activity android:name="neuron.com.room.Activity.EZ_CameraRePlayerActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop"/>
+
+        <!-- 摄像头列表页面 暂时使用 -->
+        <activity android:name="neuron.com.room.Activity.EZ_CameraListActivity"/>
+
+        <!--控制主机管理页面-->
+        <activity android:name="neuron.com.set.Activity.HostManagerActivity"/>
+        <!--控制主机详情页-->
+        <activity android:name="neuron.com.set.Activity.HostManagerDataActivity" />
+        <activity
+            android:name="neuron.com.room.Activity.ModifiedRoomName"
+            android:launchMode="singleTop" />
+        <!--选择照片界面-->
+        <activity android:name="neuron.com.set.Activity.SelectPhotoActivity"
+            android:theme="@style/licenseTheme"/>
+        <!--分享帐号管理-->
+        <activity
+            android:name="neuron.com.set.Activity.ChildAccountManagerAcitvity"
+            android:launchMode="singleTop" />
+        <!--警报页面-->
+        <activity android:name="neuron.com.room.Activity.AlertTwoActivity" />
+        <!--空调详情-->
+        <activity android:name="neuron.com.room.Activity.AirConditionActivity" />
+        <!--电动窗帘详情-->
+        <activity android:name="neuron.com.room.Activity.ElectricityCurtainActivity" />
+        <!--电视详情-->
+        <activity android:name="neuron.com.room.Activity.TelevisionActivity" />
+        <!--修改设备名称，房间页面-->
+        <activity android:name="neuron.com.room.Activity.EditActivity" />'
+        <!-- 门磁-->
+        <activity android:name="neuron.com.room.Activity.DoorSecsorActivity" />
+        <!--插座-->
+        <activity android:name="neuron.com.room.Activity.OutletActivity" />
+        <!--分享控制主机的列表-->
+        <activity android:name="neuron.com.set.Activity.ShareHostManagerListActivity" />
+        <!--红外人体感应编辑页面-->
+        <activity android:name="neuron.com.room.Activity.InfraredInductionEditActivity"
+            android:windowSoftInputMode="stateHidden|stateUnchanged"
+            />
+        <activity android:name="neuron.com.room.Activity.WaterCombinedChartActivity"/>
+        <activity android:name="neuron.com.room.Activity.WaterFuntainActivity"/>
+        <!-- 红外人体感应-->
+        <activity android:name="neuron.com.room.Activity.InfraredInductionActivity" />
+        <!--红外人体感应绑定场景-->
+        <activity android:name="neuron.com.room.Activity.SceneListActivity" />
+        <!--红外人体感应 绑定设备-->
+        <activity android:name="neuron.com.room.Activity.DeviceListActivity" />
+        <!-- 智能开关编辑页面-->
+        <activity android:name="neuron.com.scene.Activity.SwichEditActivity" />
+        <!--红外转发器编辑页面-->
+        <activity android:name="neuron.com.scene.Activity.InfraredTransponderActivity"
+            android:windowSoftInputMode="stateHidden|stateUnchanged" />
+
+        <!--修改节点设备名称和房间-->
+        <activity android:name="neuron.com.scene.Activity.UpdateDeviceDataActivity"
+            android:windowSoftInputMode="stateHidden"/>
+        <!--电视空调品牌页面-->
+        <activity android:name="neuron.com.scene.Activity.AirTVBrandListActivity"/>
+        <!--电视空调系列页面-->
+        <activity android:name="neuron.com.scene.Activity.AirTVSerialListActivity"/>
+        <!--添加电视空调-->
+        <activity android:name="neuron.com.scene.Activity.AddAirTVActivity"/>
+        <!--场景编辑-->
+        <activity android:name="neuron.com.scene.Activity.SceneEditActivity"/>
+        <!--场景设置时间-->
+        <activity android:name="neuron.com.scene.Activity.SceneTimingActivity"/>
+        <!--场景选择时间-->
+        <activity android:name="neuron.com.scene.Activity.SceneTimingSelectActivity"/>
+        <!--场景已绑定开关列表-->
+        <activity android:name="neuron.com.scene.Activity.SceneSwichListActivity"/>
+        <!--场景可绑定开关列表-->
+        <activity android:name="neuron.com.scene.Activity.SceneBindSwichListActivity"/>
+        <!--添加场景-->
+        <activity android:name="neuron.com.scene.Activity.AddSceneActivity"/>
+        <!--选择场景图标-->
+        <activity android:name="neuron.com.scene.Activity.SceneImgListActivity"/>
+        <!--场景已绑定设备列表-->
+        <activity android:name="neuron.com.scene.Activity.SceneBindDeviceListActivity"/>
+        <!--场景可绑定设备列表-->
+        <activity android:name="neuron.com.scene.Activity.SceneDeviceListActivity"/>
+        <!--添加分享码-->
+        <activity android:name="neuron.com.room.Activity.AddShareCodeActivity"/>
+        <!--子账号管理-->
+        <activity android:name="neuron.com.set.Activity.ZiAccountManagerActivity"/>
+        <!--添加子账号-->
+        <activity android:name="neuron.com.set.Activity.AddZiAccountActivity"/>
+        <!--其他-->
+        <activity android:name="neuron.com.set.Activity.AboutUsActivity"/>
+        <!--关于-->
+        <activity android:name="neuron.com.set.Activity.AboutWeActivity"/>
+        <receiver
+            android:name="neuron.com.app.EzvizBroadcastReceiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.videogo.action.OAUTH_SUCCESS_ACTION" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+        <!-- Required SDK 核心功能-->
+        <!-- 可配置android:process参数将PushService放在其他进程中 -->
+        <service
+            android:name="cn.jpush.android.service.PushService"
+            android:enabled="true"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="cn.jpush.android.intent.REGISTER" />
+                <action android:name="cn.jpush.android.intent.REPORT" />
+                <action android:name="cn.jpush.android.intent.PushService" />
+                <action android:name="cn.jpush.android.intent.PUSH_TIME" />
+            </intent-filter>
+        </service>
+
+        <!-- since 1.8.0 option 可选项。用于同一设备中不同应用的JPush服务相互拉起的功能。 -->
+        <!-- 若不启用该功能可删除该组件，将不拉起其他应用也不能被其他应用拉起 -->
+        <service
+            android:name="cn.jpush.android.service.DaemonService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter >
+                <action android:name="cn.jpush.android.intent.DaemonService" />
+                <category android:name="neuron.com.comneuron"/>
+            </intent-filter>
+        </service>
+
+        <!-- Required SDK核心功能-->
+        <receiver
+            android:name="cn.jpush.android.service.PushReceiver"
+            android:enabled="true" >
+            <intent-filter android:priority="1000">
+                <action android:name="cn.jpush.android.intent.NOTIFICATION_RECEIVED_PROXY" />
+                <category android:name="neuron.com.comneuron"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+            <!-- Optional -->
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <action android:name="android.intent.action.PACKAGE_REMOVED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Required SDK核心功能-->
+        <activity
+            android:name="cn.jpush.android.ui.PushActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:theme="@android:style/Theme.NoTitleBar"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="cn.jpush.android.ui.PushActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="neuron.com.comneuron" />
+            </intent-filter>
+        </activity>
+        <!-- SDK核心功能-->
+        <activity
+            android:name="cn.jpush.android.ui.PopWinActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:exported="false"
+            android:theme="@style/MyDialogStyle">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="neuron.com.comneuron" />
+            </intent-filter>
+        </activity>
+
+        <!-- Required SDK核心功能-->
+        <service
+            android:name="cn.jpush.android.service.DownloadService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
+
+        <!-- Required SDK核心功能-->
+        <receiver android:name="cn.jpush.android.service.AlarmReceiver" />
+
+        <!-- User defined. 用户自定义的广播接收器-->
+        <receiver
+            android:name="neuron.com.app.JPushBroadcastReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <!--Required 用户注册SDK的intent-->
+                <action android:name="cn.jpush.android.intent.REGISTRATION" />
+                <!--Required 用户接收SDK消息的intent-->
+                <action android:name="cn.jpush.android.intent.MESSAGE_RECEIVED" />
+                <!--Required 用户接收SDK通知栏信息的intent-->
+                <action android:name="cn.jpush.android.intent.NOTIFICATION_RECEIVED" />
+                <!--Required 用户打开自定义通知栏的intent-->
+                <action android:name="cn.jpush.android.intent.NOTIFICATION_OPENED" />
+                <!-- 接收网络变化 连接/断开 since 1.6.3 -->
+                <action android:name="cn.jpush.android.intent.CONNECTION" />
+                <category android:name="neuron.com.comneuron" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Required. For publish channel feature -->
+        <!-- JPUSH_CHANNEL 是为了方便开发者统计APK分发渠道。-->
+        <!-- 例如: -->
+        <!-- 发到 Google Play 的APK可以设置为 google-play; -->
+        <!-- 发到其他市场的 APK 可以设置为 xxx-market。 -->
+        <!-- 目前这个渠道统计功能的报表还未开放。-->
+        <meta-data android:name="JPUSH_CHANNEL" android:value="developer-default"/>
+        <!--  </>值来自开发者平台取得的AppKey-->
+        <meta-data android:name="JPUSH_APPKEY" android:value="4b889b82a72157186ae4817e"/>
+        <!--乐固多渠道打包使用-->
+        <meta-data android:name="Neuron" android:value="1"></meta-data>
+    </application>
+
+</manifest>

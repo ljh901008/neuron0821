@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,7 +29,8 @@ import neuron.com.util.XutilsHelper;
  */
 public class WaterFuntainActivity extends BaseActivity implements View.OnClickListener{
     private String TAG = "WaterFuntainActivity";
-    private ImageButton back_ibtn, edit_ibtn;
+    private ImageButton back_ibtn;
+    private Button edit_ibtn;
     private TextView deviceName_tv, roomName_tv;
     //水量，是否在线，TDS,水温,滤芯,剩余水量，已用天数，剩余天数
     private TextView waterValue_tv, isOnline_tv,tds_tv,temp_tv,ceramic_tv,residueWater_tv,useDay_tv,ceramicDay_tv;
@@ -114,7 +116,7 @@ public class WaterFuntainActivity extends BaseActivity implements View.OnClickLi
         deviceId = intent.getStringExtra("deviceId");
         deviceType = intent.getStringExtra("deviceType");
         back_ibtn = (ImageButton) findViewById(R.id.waterfountain_back_ibtn);
-        edit_ibtn = (ImageButton) findViewById(R.id.waterfountain_edit_btn);
+        edit_ibtn = (Button) findViewById(R.id.waterfountain_edit_btn);
         next_ibtn = (ImageButton) findViewById(R.id.waterfountain_next_iv);
         deviceName_tv = (TextView) findViewById(R.id.waterfountain_devicename_tv);
         roomName_tv = (TextView) findViewById(R.id.waterfountain_roomnama_tv);
@@ -185,6 +187,7 @@ public class WaterFuntainActivity extends BaseActivity implements View.OnClickLi
      * 获取灯详情
      */
     private void getLightStatus(String deviceId,String deviceType){
+        Log.e(TAG + "净水器", deviceId + "," + deviceType);
         setAccount();
         try {
             Utils.showWaitDialog("加载中...",WaterFuntainActivity.this,mWaitDialog);

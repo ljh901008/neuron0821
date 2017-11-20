@@ -149,13 +149,13 @@ public class XutilsHelper {
 		params.setAsJsonContent(true);
 		params.setBodyContent(json.toString());
 		//设置请求时长
-		params.setConnectTimeout(5000);
+		params.setConnectTimeout(25000);
 	}
 
 
 	public void add(String name,String value){
 		//设置请求时长
-		params.setConnectTimeout(10000);
+		params.setConnectTimeout(25000);
 		params.addBodyParameter(name, value);
 
 	}
@@ -220,6 +220,10 @@ public class XutilsHelper {
 		});
 	}
 
+	public void sendPost2(Callback.CommonCallback<String> callback) {
+
+		x.http().post(params, callback);
+	}
 	/**
 	 *    图片加载
 	 * @param imageView

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import neuron.com.adapter.ViewPagerAdapter;
 import neuron.com.app.JPushBroadcastReceiver;
 import neuron.com.app.OgeApplication;
+import neuron.com.database.SharedPreferencesManager;
 import neuron.com.fragment.MeFragment;
 import neuron.com.fragment.RoomFragment;
 import neuron.com.fragment.SceneFragment;
@@ -46,10 +47,12 @@ public class MainActivity extends BaseActivity {
     private static boolean isExit = false;
     private Intent intent;
     JPushBroadcastReceiver jPushBroadcastReceiver;
+    SharedPreferencesManager sharedPreferencesManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        sharedPreferencesManager = SharedPreferencesManager.getInstance(this);
         init();
         initView();
         setOnclick();

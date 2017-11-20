@@ -11,7 +11,7 @@ public class URLUtils {
     //阿里云IP
     private static final String ALI_URL= "http://ehooworld.com:8080";
 
-    public static final String URL_HEAD = WAI_URL;
+    public static final String URL_HEAD = ALI_URL;
 
     public static final String MD5_SIGN = "b083df8ce6d2ad72";
     /**
@@ -66,4 +66,7 @@ public class URLUtils {
     public static final String AppKey = "0E803F8F6F0A4FC89EDD0D62C0B0A9C1";
     //音响SecretKey
     public static final String SecretKey = "4484A18D521140C3B211B9FABB687D7A";
+
+    public static final String needUpdate = "1";
+    public static final String noUpdate = "2";
 }

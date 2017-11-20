@@ -3,6 +3,7 @@ package neuron.com.set.Activity;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -13,6 +14,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,7 +41,7 @@ import neuron.com.util.XutilsHelper;
 public class AboutUsActivity extends BaseActivity implements View.OnClickListener{
     private String TAG = "AboutUsActivity";
     private ImageButton back;
-    private RelativeLayout clear_rll,aboutUs_rll, outLogin_rll;
+    private RelativeLayout clear_rll,aboutUs_rll, outLogin_rll,update_rll;
     private TextView version;
     private SharedPreferencesManager sharedPreferencesManager;
     private String account;
@@ -72,7 +74,6 @@ public class AboutUsActivity extends BaseActivity implements View.OnClickListene
                                 button.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
-                                        sharedPreferencesManager = SharedPreferencesManager.getInstance(AboutUsActivity.this);
                                         sharedPreferencesManager.remove("token");
                                         sharedPreferencesManager.remove("engine_id");
                                         JPushInterface.setAlias(AboutUsActivity.this, "", new TagAliasCallback() {
@@ -112,6 +113,7 @@ public class AboutUsActivity extends BaseActivity implements View.OnClickListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.aboutus);
         mWaitDialog = new WaitDialog(this, android.R.style.Theme_Translucent_NoTitleBar);
+        sharedPreferencesManager = SharedPreferencesManager.getInstance(this);
         init();
         setListener();
     }
@@ -121,14 +123,16 @@ public class AboutUsActivity extends BaseActivity implements View.OnClickListene
         clear_rll = (RelativeLayout) findViewById(R.id.aboutus_clear_rll);
         aboutUs_rll = (RelativeLayout) findViewById(R.id.aboutus__rll);
         outLogin_rll = (RelativeLayout) findViewById(R.id.aboutus_outlogin_rll);
+        update_rll = (RelativeLayout) findViewById(R.id.aboutus_update_rll);
         version = (TextView) findViewById(R.id.aboutus_version_tv);
-        version.setText(getVersion());
+        version.setText("版本号:" + getVersion());
     }
     private void setListener(){
         back.setOnClickListener(this);
         clear_rll.setOnClickListener(this);
         outLogin_rll.setOnClickListener(this);
         aboutUs_rll.setOnClickListener(this);
+        update_rll.setOnClickListener(this);
     }
     @Override
     public void onClick(View view) {
@@ -162,12 +166,45 @@ public class AboutUsActivity extends BaseActivity implements View.OnClickListene
                 Intent intent = new Intent(AboutUsActivity.this, AboutWeActivity.class);
                 startActivity(intent);
                 break;
+            case R.id.aboutus_update_rll://检查更新
+                String verId = sharedPreferencesManager.get("versionCode");
+                if (sharedPreferencesManager.has("isUpdate") && verId.compareTo(getVersion()) > 0) {
+                    final AlertDialog builder = new AlertDialog.Builder(AboutUsActivity.this).create();
+                    View view1 = View.inflate(AboutUsActivity.this, R.layout.dialog_alert, null);
+                    TextView content = (TextView) view1.findViewById(R.id.dialog_alert_content);
+                    Button cancle = (Button) view1.findViewById(R.id.dialog_alert_cancle);
+                    Button enter = (Button) view1.findViewById(R.id.dialog_alert_enter);
+                    content.setText("检测到新版本，请及时更新");
+                    builder.setView(view1);
+                    cancle.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            sharedPreferencesManager.save("isUpdate", URLUtils.noUpdate);
+                            builder.dismiss();
+                        }
+                    });
+                    enter.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intent = new Intent();
+                            intent.setAction("android.intent.action.VIEW");
+                            Uri uri = Uri.parse(sharedPreferencesManager.get("versionUrl"));
+                            intent.setData(uri);
+                            startActivity(intent);
+                            builder.dismiss();
+                        }
+                    });
+                    builder.show();
+                } else {
+                    Toast.makeText(AboutUsActivity.this, "没有新版本更新", Toast.LENGTH_SHORT).show();
+                }
+                break;
             default:
             break;
         }
     }
     private void outLogin(){
-        sharedPreferencesManager = SharedPreferencesManager.getInstance(this);
+
         if (sharedPreferencesManager.has("account")) {
             account = sharedPreferencesManager.get("account");
         }
@@ -194,12 +231,10 @@ public class AboutUsActivity extends BaseActivity implements View.OnClickListene
             PackageManager manager = this.getPackageManager();
             PackageInfo info = manager.getPackageInfo(this.getPackageName(), 0);
             String version = info.versionName;
-            return "版本号:" + version;
+            return version;
         } catch (Exception e) {
             e.printStackTrace();
-            return "版本号: 1.0.0";
+            return "1.0.0";
         }
     }
-
-
 }

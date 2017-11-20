@@ -3,11 +3,13 @@ package neuron.com.fragment;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -176,8 +178,35 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     if (msg.what == 102) {
                         String roomResult = (String) msg.obj;
                         Log.e(TAG + "首页列表", roomResult);
-
                         Utils.dismissWaitDialog(mWaitDialog);
+                        if (sharedPreferencesManager.has("isUpdate") && sharedPreferencesManager.get("isUpdate").equals(URLUtils.needUpdate)) {//有版本需要更新
+                            final AlertDialog builder = new AlertDialog.Builder(getActivity()).create();
+                            View v = View.inflate(getActivity(), R.layout.dialog_alert, null);
+                            TextView content = (TextView) v.findViewById(R.id.dialog_alert_content);
+                            Button cancle = (Button) v.findViewById(R.id.dialog_alert_cancle);
+                            Button enter = (Button) v.findViewById(R.id.dialog_alert_enter);
+                            content.setText("检测到新版本，请及时更新");
+                            builder.setView(v);
+                            cancle.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    sharedPreferencesManager.save("isUpdate", URLUtils.noUpdate);
+                                    builder.dismiss();
+                                }
+                            });
+                            enter.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    Intent intent = new Intent();
+                                    intent.setAction("android.intent.action.VIEW");
+                                    Uri uri = Uri.parse(sharedPreferencesManager.get("versionUrl"));
+                                    intent.setData(uri);
+                                    startActivity(intent);
+                                    builder.dismiss();
+                                }
+                            });
+                            builder.show();
+                        }
                         try {
                             JSONObject js = new JSONObject(roomResult);
                             int status = js.getInt("status");
@@ -379,6 +408,10 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                 case 3://摄像头错误码
                     int errorCode = (int) msg.obj;
                     if (errorCode == 120018) {//120018：此token不是这个帐号对应token
+                        getTime();
+                    }else if(errorCode==110003){//token过期
+                        getTime();
+                    }else if (errorCode ==110003) {//token 异常
                         getTime();
                     }
                     break;
@@ -613,6 +646,7 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                 } else if ("33005".equals(dType)) {//门磁
                     intent.setClass(getActivity(), DoorSecsorActivity.class);
                     startActivity(intent);
+
                 } else if ("33003".equals(dType)) {//红外人体感应
                     intent.setClass(getActivity(), InfraredInductionActivity.class);
                     startActivity(intent);
@@ -634,10 +668,31 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
         sceneGv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                controlScene(sceneItemBeanList.get(position).getSceneId(), controlMethod, "ffff");
-                sceneItemBeanList.get(position).setSceneStatus(1);
-                sceneAdapter.setList(sceneItemBeanList);
 
+                final AlertDialog builder = new AlertDialog.Builder(getActivity()).create();
+                View view1 = View.inflate(getActivity(), R.layout.dialog_alert, null);
+                TextView content = (TextView) view1.findViewById(R.id.dialog_alert_content);
+                Button cancle = (Button) view1.findViewById(R.id.dialog_alert_cancle);
+                Button enter = (Button) view1.findViewById(R.id.dialog_alert_enter);
+                enter.setText("确 认");
+                content.setText("触发场景");
+                builder.setView(view1);
+                cancle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        builder.dismiss();
+                    }
+                });
+                enter.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        controlScene(sceneItemBeanList.get(position).getSceneId(), controlMethod, "ffff");
+                        sceneItemBeanList.get(position).setSceneStatus(1);
+                        sceneAdapter.setList(sceneItemBeanList);
+                        builder.dismiss();
+                    }
+                });
+                builder.show();
             }
         });
     }
@@ -660,7 +715,7 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
         switch (view.getId()) {
             case R.id.roomfragment_alert_rll://警报
                 Intent intent = new Intent(getActivity(), AlertTwoActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, Activity.RESULT_FIRST_USER);
                 break;
             case R.id.roomfragment_add_ivbtn://扫一扫
                 showPopuWindowTwo();

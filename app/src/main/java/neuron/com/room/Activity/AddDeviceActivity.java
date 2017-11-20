@@ -104,6 +104,61 @@ public class AddDeviceActivity extends BaseActivity implements View.OnClickListe
                                 deviceName = jsonMsg.getString("device_type_name");
                                 deviceTypeId = jsonMsg.getString("device_type_id");
                                 deviceName_tv.setText(deviceName);
+                                switch(deviceTypeId){
+                                    case "257":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "258":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "259":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "260":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "261":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "262":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "263":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "264":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "265":
+                                        devicePhoto_iv.setImageResource(R.mipmap.intelligent_switch);
+                                        break;
+                                    case "769":
+                                        devicePhoto_iv.setImageResource(R.mipmap.infrared_sensor);
+                                        break;
+                                    case "770":
+                                        devicePhoto_iv.setImageResource(R.mipmap.smart_menci);
+                                        break;
+                                    case "1025":
+                                        devicePhoto_iv.setImageResource(R.mipmap.infrared_transponder);
+                                        break;
+                                    case "1026":
+                                        devicePhoto_iv.setImageResource(R.mipmap.air_curtain);
+                                        break;
+                                    case "1281":
+                                        devicePhoto_iv.setImageResource(R.mipmap.air_quality_detector);
+                                        break;
+                                    case "1537":
+                                        devicePhoto_iv.setImageResource(R.mipmap.smart_socket);
+                                        break;
+                                    case "2305":
+                                        devicePhoto_iv.setImageResource(R.mipmap.control_the_host);
+                                        break;
+                                    case "4097":
+                                        devicePhoto_iv.setImageResource(R.mipmap.water_purifier);
+                                        break;
+                                    default:
+                                    break;
+                                }
                             } else {
                                 //Toast.makeText(AddDeviceActivity.this, jsonObject.getString("msg"), Toast.LENGTH_LONG).show();
                                 Log.e(TAG + "设备可用性", (String) msg.obj);
@@ -310,8 +365,10 @@ public class AddDeviceActivity extends BaseActivity implements View.OnClickListe
         if (tag == 1) {//添加摄像头
             deviceName_tv.setText("摄像头");
         } else if (tag == 3) {//添加音响
+            devicePhoto_iv.setImageResource(R.mipmap.intelligent_sound);
             deviceName_tv.setText("音响");
         } else {//添加设备
+            devicePhoto_iv.setImageResource(R.mipmap.camera);
             checkDevice();
         }
     }

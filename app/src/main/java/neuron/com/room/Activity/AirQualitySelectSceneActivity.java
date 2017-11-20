@@ -217,7 +217,7 @@ public class AirQualitySelectSceneActivity extends BaseActivity implements Adapt
                 unit_tv.setText("%");
                 break;
             case 5://甲醛
-                tishi_tv.setText("甲醛值:");
+                tishi_tv.setText("TVOC:");
                 unit_tv.setText("mg/m³");
                 break;
             case 6://PM2.5
@@ -257,70 +257,33 @@ public class AirQualitySelectSceneActivity extends BaseActivity implements Adapt
                 break;
             case R.id.airqualityscene_fonfirm_btn://确定键
                 value = value_ed.getText().toString().trim();
-                if (!TextUtils.isEmpty(value)) {
-                    if (list.size() != 0) {
-                        /*if (index == 2) {
-                            if (list.get(2).isSelect()) {
-                                switch (tag) {
-                                    case 1://温度高于
-                                        updateScene("1", list.get(2).getSceneId(), "05." + value);
-                                        break;
-                                    case 2://温度低于
-                                        updateScene("1", list.get(2).getSceneId(), "06." + value);
-                                        break;
-                                    case 3://湿度高于
-                                        updateScene("1", list.get(2).getSceneId(), "07." + value);
-                                        break;
-                                    case 4://湿度低于
-                                        updateScene("1", list.get(2).getSceneId(), "08." + value);
-                                        break;
-                                    case 5://甲醛
-                                        float d = Float.parseFloat(value);
-                                        if (d > 0.01 && d < 9.99) {
-                                            String s = String.valueOf(d * 100);
-                                            updateScene("1", list.get(2).getSceneId(), "02." + s.substring(0,s.lastIndexOf(".")));//服务器直接收整型的数据
-                                        } else {
-                                            Utils.showDialog(AirQualitySelectSceneActivity.this, "请输入0.01-9.99范围内的数值");
-                                        }
-                                        break;
-                                    case 6://pm2.5
-                                        int i = Integer.parseInt(value);
-                                        if (i > 0 && i < 999) {
-                                            updateScene("1", list.get(2).getSceneId(), "01." + value);
-                                        } else {
-                                            Utils.showDialog(AirQualitySelectSceneActivity.this, "请输入0-999范围内的数值");
-                                        }
+                if (list.size() != 0) {
 
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                        } else*/
-                        if (index == 0) {//删除
-                            switch (tag) {
-                                case 1://温度高于
-                                    deleteScene("05");
-                                    break;
-                                case 2://温度低于
-                                    deleteScene("06");
-                                    break;
-                                case 3://湿度高于
-                                    deleteScene("07");
-                                    break;
-                                case 4://湿度低于
-                                    deleteScene("08");
-                                    break;
-                                case 5://甲醛
-                                    deleteScene("02");
-                                    break;
-                                case 6://PM2.5
-                                    deleteScene("01");
-                                    break;
-                                default:
-                                    break;
-                            }
-                        } else if (index == 1) {//设定警报
+                    if (index == 0) {//删除
+                        switch (tag) {
+                            case 1://温度高于
+                                deleteScene("05");
+                                break;
+                            case 2://温度低于
+                                deleteScene("06");
+                                break;
+                            case 3://湿度高于
+                                deleteScene("07");
+                                break;
+                            case 4://湿度低于
+                                deleteScene("08");
+                                break;
+                            case 5://甲醛
+                                deleteScene("02");
+                                break;
+                            case 6://PM2.5
+                                deleteScene("01");
+                                break;
+                            default:
+                                break;
+                        }
+                    } else if (index == 1) {//设定警报
+                        if (!TextUtils.isEmpty(value)) {
                             switch (tag) {
                                 case 1://温度高于
                                     Utils.showDialog(AirQualitySelectSceneActivity.this, "只有甲醛和PM2.5可以设置警报");
@@ -338,8 +301,8 @@ public class AirQualitySelectSceneActivity extends BaseActivity implements Adapt
                                     //int d = Integer.parseInt(value);
                                     float d = Float.parseFloat(value);
                                     if (d > 0.01 && d < 9.99) {
-                                            String s = String.valueOf(d * 100);
-                                            updateScene("2", "", "02." + s.substring(0, s.lastIndexOf(".")));//服务器直接收整型的数据
+                                        String s = String.valueOf(d * 100);
+                                        updateScene("2", "", "02." + s.substring(0, s.lastIndexOf(".")));//服务器直接收整型的数据
                                     } else {
                                         Utils.showDialog(AirQualitySelectSceneActivity.this, "请输入0.01-9.99范围内的数值");
                                     }
@@ -355,9 +318,13 @@ public class AirQualitySelectSceneActivity extends BaseActivity implements Adapt
                                 default:
                                     break;
                             }
-                        } else if (index == 14) {
-                            Utils.showDialog(AirQualitySelectSceneActivity.this, "请选择场景");
                         } else {
+                            Utils.showDialog(AirQualitySelectSceneActivity.this, "请输入合法数据");
+                        }
+                    } else if (index == 14) {
+                        Utils.showDialog(AirQualitySelectSceneActivity.this, "请选择场景");
+                    } else {
+                        if (!TextUtils.isEmpty(value)) {
                             switch (tag) {
                                 case 1://温度高于
                                     updateScene("1", list.get(index).getSceneId(), "05." + value);
@@ -393,10 +360,10 @@ public class AirQualitySelectSceneActivity extends BaseActivity implements Adapt
                                 default:
                                     break;
                             }
+                        } else {
+                            Utils.showDialog(AirQualitySelectSceneActivity.this, "请输入合法数据");
                         }
                     }
-                } else {
-                    Utils.showDialog(AirQualitySelectSceneActivity.this, "请输入合法数据");
                 }
                 if (index != 14) {
                     intent.putExtra("value", value);

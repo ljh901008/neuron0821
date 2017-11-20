@@ -3,8 +3,10 @@ package neuron.com.room.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -39,7 +41,8 @@ import neuron.com.comneuron.R;
  * Created by ljh on 2017/7/20.
  */
 public class WaterCombinedChartActivity extends BaseActivity implements View.OnClickListener{
-    private ImageButton back_ibtn,titleRight_ibtn;
+    private ImageButton back_ibtn;
+    private Button titleRight_ibtn;
     private TextView deviceName_tv, roomName_tv;
     private CombinedChart combinedChart;
     private Intent intent;
@@ -65,7 +68,7 @@ public class WaterCombinedChartActivity extends BaseActivity implements View.OnC
         roomId = intent.getStringExtra("roomId");
 
         back_ibtn = (ImageButton) findViewById(R.id.waterlinechart_back_ibtn);
-        titleRight_ibtn = (ImageButton) findViewById(R.id.waterlinechart_edit_btn);
+        titleRight_ibtn = (Button) findViewById(R.id.waterlinechart_edit_btn);
         deviceName_tv = (TextView) findViewById(R.id.waterlinechart_devicename_tv);
         roomName_tv = (TextView) findViewById(R.id.waterlinechart_roomnama_tv);
         combinedChart = (CombinedChart) findViewById(R.id.waterlinechart_chart);
@@ -102,19 +105,21 @@ public class WaterCombinedChartActivity extends BaseActivity implements View.OnC
 
     private void analysis(String data){
         try {
-            JSONArray jsonArray = new JSONArray(data);
-            int length = jsonArray.length();
-            if (length > 0) {
-                xAxisValues = new ArrayList<>();
-                lineValues = new ArrayList<>();
-                barValues = new ArrayList<>();
-                for (int i = 0; i < length; i++) {
-                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    xAxisValues.add(jsonObject.getString("date"));
-                    lineValues.add((float) jsonObject.getDouble("tds"));
-                    barValues.add((float) jsonObject.getDouble("flow"));
+            if (!TextUtils.isEmpty(data)) {
+                JSONArray jsonArray = new JSONArray(data);
+                int length = jsonArray.length();
+                if (length > 0) {
+                    xAxisValues = new ArrayList<>();
+                    lineValues = new ArrayList<>();
+                    barValues = new ArrayList<>();
+                    for (int i = 0; i < length; i++) {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        xAxisValues.add(jsonObject.getString("date"));
+                        lineValues.add((float) jsonObject.getDouble("tds"));
+                        barValues.add((float) jsonObject.getDouble("flow"));
+                    }
+                    setCombineChart(combinedChart, xAxisValues, lineValues, barValues, "TDS（mg/L）", "水量（L）");
                 }
-                setCombineChart(combinedChart, xAxisValues, lineValues, barValues, "TDS（mg/L）", "水量（L）");
             }
         } catch (JSONException e) {
             e.printStackTrace();

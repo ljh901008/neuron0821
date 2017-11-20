@@ -3,16 +3,20 @@ package neuron.com.app;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechUtility;
 import com.videogo.openapi.EZOpenSDK;
 
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xutils.x;
 
 import java.util.LinkedList;
@@ -47,26 +51,30 @@ public class OgeApplication extends Application {
             int arg1 = msg.arg1;
             switch(arg1){
                 case 1:
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-                    builder.setTitle("升级提示")
-                            .setCancelable(false)
-                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
+                    if (msg.what == 102) {
+                        String result = (String) msg.obj;
+                        Log.e("Application", result);
+                        try {
+                            JSONObject jsonObject = new JSONObject(result);
+                            if (jsonObject.getInt("status") == 9999) {
+                                String versionId = jsonObject.getString("version_id");
+                                String url = jsonObject.getString("url");
+                                sharedPreferencesManager.save("versionUrl", url);
+                                sharedPreferencesManager.save("versionCode", versionId);
+                                if (!TextUtils.isEmpty(versionId) && !versionId.equals(getVersion())) {
+                                    sharedPreferencesManager.save("isUpdate", URLUtils.needUpdate);
+                                } else {
+                                    sharedPreferencesManager.save("isUpdate", URLUtils.noUpdate);
+                                }
 
-                                }
-                            })
-                            .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-                    AlertDialog alertDialog = builder.create();
-                    //alertDialog.show();
-                break;
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
                 default:
-                break;
+                    break;
             }
         }
     };
@@ -91,13 +99,14 @@ public class OgeApplication extends Application {
             return;
         }
         LeakCanary.install(this);*/
-        //checkAppVersion("CheckAndUpdate");//检测版本
+        checkAppVersion("CheckAndUpdate");//检测版本
         //初始化语音功能
         SpeechUtility.createUtility(OgeApplication.this, SpeechConstant.APPID + "=596c597b");
         context = getApplicationContext();
         //音响初始化
         RetrofitFactory.init(this); //进行RetrofitFactory的初始化
         RetrofitFactory.register(new ErrorObserver()); //注册 网络响应 观察者
+
     }
 
 
@@ -173,7 +182,22 @@ public class OgeApplication extends Application {
         xutilsHelper.add("sign", sign);
         xutilsHelper.sendPost(1,getApplicationContext());
     }
-
+    /**
+     * 2  * 获取版本号
+     * 3  * @return 当前应用的版本号
+     * 4
+     */
+    public String getVersion() {
+        try {
+            PackageManager manager = this.getPackageManager();
+            PackageInfo info = manager.getPackageInfo(this.getPackageName(), 0);
+            String version = info.versionName;
+            return version;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "1.0.1";
+        }
+    }
     /**
      *   音响发送指令  所有的结果都在SocketResultEvent 这里边拿到
      * @param sendstr

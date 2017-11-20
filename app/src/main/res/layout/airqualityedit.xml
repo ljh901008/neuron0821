@@ -438,7 +438,7 @@
                     android:id="@+id/airqualityedit_formaldehydename_tv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="甲醛:"
+                    android:text="TVOC:"
                     android:textSize="@dimen/text_size_16"
                     android:textColor="@color/white"
                     android:layout_marginLeft="@dimen/dp_size_7"

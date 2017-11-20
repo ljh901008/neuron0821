@@ -1,5 +1,6 @@
 package neuron.com.room.Activity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
@@ -55,6 +56,7 @@ public class AlertTwoActivity extends BaseActivity implements View.OnClickListen
     private List<Map<String, String>> list;
     private boolean isFirst = true;
     private int mPosition = 100;
+    private Intent intent;
     private Handler handler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -229,6 +231,7 @@ public class AlertTwoActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void init() {
+        intent = getIntent();
         back_iv = (ImageView) findViewById(R.id.alerttwoactivity_back_iv);
         clear_btn = (Button) findViewById(R.id.alerttwoactivity_clear_btn);
         listView = (SwipeMenuListView) findViewById(R.id.alerttwoactivity_alertlistview);
@@ -303,6 +306,8 @@ public class AlertTwoActivity extends BaseActivity implements View.OnClickListen
     public void onClick(View view) {
         switch(view.getId()){
             case R.id.alerttwoactivity_back_iv://返回
+                intent.putExtra("tag", 1);
+                setResult(RESULT_OK, intent);
                 finish();
                 break;
             case R.id.alerttwoactivity_clear_btn://清空

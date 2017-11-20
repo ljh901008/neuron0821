@@ -31,6 +31,8 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
+import org.xutils.ex.HttpException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,146 +104,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     //从手势密码页面进来的标记 0忘记手势密码  1其他方式登录
     private int type;
     private Intent intent;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1){
-                case 1://检验帐号的可用性
-                    if (msg.what == 102) {//请求成功
-                        String result = (String) msg.obj;
-                        try {
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {//请求成功，可以调用登陆接口
-                                String MacAddress = getMacAddress();
-                                String aesPwd = AESOperator.encrypt(MD5Utils.MD5Encode(userPwd + URLUtils.MD5_SIGN, ""), URLUtils.AES_SIGN);
-                                String signString = aesUserName + aesPwd + MacAddress + LOGIN_METHOD + URLUtils.MD5_SIGN;
-                                String sign = MD5Utils.MD5Encode(signString, "");
-                                XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL, handler);
-                                xutil.add("account", aesUserName);
-                                xutil.add("password", aesPwd);
-                                xutil.add("device_identifier", MacAddress);
-                                xutil.add("method", LOGIN_METHOD);
-                                xutil.add("sign", sign);
-                                xutil.sendPost(2, LoginActivity.this);
-                            } else {
-                                Utils.dismissWaitDialog(mWaitDialog);
-                                Toast.makeText(LoginActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(LoginActivity.this, (String)msg.obj, Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 2://登录
-                    if (msg.what == 102){//登录成功
-                        String loginResult = (String) msg.obj;
-                        Log.e(TAG + "登陆", loginResult);
-                        try {
-                            JSONObject loginJson = new JSONObject(loginResult);
-                            if (loginJson.getInt("status") == 9999){
-                                Utils.dismissWaitDialog(mWaitDialog);
-                                intent = getIntent();
-                                type = intent.getIntExtra("type", 3);
-                                if (type == 0) {//从手势密码页面点击忘记密码进入的，要清空手势密码
-                                    spm.remove("handlock");
-                                }
-                                token = loginJson.getString("token");
-                                JSONObject jsonObject = loginJson.getJSONObject("msg");
-                                /*if (spm.has("account")) {
-                                    //如果重新登录帐号和已保存帐号不一样就删除萤石token
-                                    if (!jsonObject.getString("account").equals(spm.get("account"))) {
-                                        if (spm.has("EZToken")) {
-                                            spm.remove("EZToken");
-                                        }
-                                    }
-                                }*/
-                                spm.save("account",userName);
-                                spm.save("token",token);
-                                Log.e(TAG + "token", token);
-                                //储存昵称
-                                spm.save("username", jsonObject.getString("username"));
-                                //储存帐号权限
-                                spm.save("userType", jsonObject.getString("type"));
-                                JSONArray jsonArray = jsonObject.getJSONArray("engine_list");
-                                int engineLength = jsonArray.length();
-                                if (engineLength > 0) {
-                                    for (int i = 0; i < engineLength; i++) {
-                                        JSONObject js = jsonArray.getJSONObject(i);
-                                        int engine_default = js.getInt("_default");
-                                        if (engine_default == 0) {//表示有默认的控制主机 如果第一次登陆的话是没有控制主机的
-                                            spm.save("engine_id", js.getString("engine_id"));
-                                            spm.save("is_belong", String.valueOf(js.getInt("is_belong")));
-                                        }
-                                    }
-                                } else {
-                                    if (spm.has("engine_id")) {
-                                        spm.remove("engine_id");
-                                    }
-                                }
-                                if (spm.has("EZToken")) {//确保换张号的时候不会出现无法播放的问题
-                                    spm.remove("EZToken");
-                                }
-                                JSONObject jsonPath = jsonObject.getJSONObject("photo_path");
-                                String photoPath = jsonPath.getString("Android");
-                                Log.e("登陆界面头像路径", photoPath);
-                                spm.save("photo_path", photoPath);
-                                //可以在次做是否是第一次登陆的判断处理
-                                if (spm.has("isFirstLogin")) {//如果登录过，这个值肯定存在
-                                    //第一次登录后在手势密码页面和我的页面里边可以设定这个值，0跳过，1验证手势密码
-                                    if (!"0".equals(spm.get("isFirstLogin"))) {
-                                        if (spm.has("handlock")) {
-                                            Intent intent = new Intent(getApplicationContext(), GestureVerifyActivity.class);
-                                            startActivity(intent);
-                                        } else {
-                                            Intent intent3 = new Intent(getApplicationContext(), MainActivity.class);
-                                            startActivity(intent3);
-                                        }
-                                    } else {
-                                        Intent intent3 = new Intent(getApplicationContext(), MainActivity.class);
-                                        startActivity(intent3);
-                                    }
-                                } else {
-                                    Intent intent = new Intent(LoginActivity.this, GestureEditActivity.class);
-                                    startActivity(intent);
-                                }
-                                if (spm.has("account")) {
-                                    JPushInterface.setAlias(LoginActivity.this, spm.get("account"), new TagAliasCallback() {
-                                        @Override
-                                        public void gotResult(int i, String s, Set<String> set) {
-                                            if (i == 0) {//设置失败
-                                               // Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
-                                                Log.e("设置别名", "成功！！！！！" + s);
-                                            }
-                                        }
-                                    });
-                                    //设置别名
-                                   // JPushInterface.setAlias(LoginActivity.this,1, spm.get("account"));
-                                }
-                            }else {
-                                Utils.dismissWaitDialog(mWaitDialog);
-                                Toast.makeText(LoginActivity.this,loginJson.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            Utils.dismissWaitDialog(mWaitDialog);
-                            e.printStackTrace();
-                        }
-                    }else if (msg.what == 101){
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(LoginActivity.this,(String)msg.obj,Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+    private Handler handler = new Handler();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -326,7 +189,168 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                             xutils.add("account", aesUserName);
                             xutils.add("method", CHECKACCOUNT_METHOD);
                             xutils.add("sign", sign);
-                            xutils.sendPost(1, this);
+                            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                                @Override
+                                public void onSuccess(String s) {
+                                        try {
+                                            JSONObject json = new JSONObject(s);
+                                            if (json.getInt("status") == 9999) {//请求成功，可以调用登陆接口
+                                                String MacAddress = getMacAddress();
+                                                String aesPwd = AESOperator.encrypt(MD5Utils.MD5Encode(userPwd + URLUtils.MD5_SIGN, ""), URLUtils.AES_SIGN);
+                                                String signString = aesUserName + aesPwd + MacAddress + LOGIN_METHOD + URLUtils.MD5_SIGN;
+                                                String sign = MD5Utils.MD5Encode(signString, "");
+                                                XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+                                                xutil.add("account", aesUserName);
+                                                xutil.add("password", aesPwd);
+                                                xutil.add("device_identifier", MacAddress);
+                                                xutil.add("method", LOGIN_METHOD);
+                                                xutil.add("sign", sign);
+                                                xutil.sendPost2(new CommonCallback<String>() {
+                                                    @Override
+                                                    public void onSuccess(String s) {
+                                                        try {
+                                                            JSONObject loginJson = new JSONObject(s);
+                                                            if (loginJson.getInt("status") == 9999){
+                                                                Utils.dismissWaitDialog(mWaitDialog);
+                                                                intent = getIntent();
+                                                                type = intent.getIntExtra("type", 3);
+                                                                if (type == 0) {//从手势密码页面点击忘记密码进入的，要清空手势密码
+                                                                    spm.remove("handlock");
+                                                                }
+                                                                token = loginJson.getString("token");
+                                                                JSONObject jsonObject = loginJson.getJSONObject("msg");
+                                /*if (spm.has("account")) {
+                                    //如果重新登录帐号和已保存帐号不一样就删除萤石token
+                                    if (!jsonObject.getString("account").equals(spm.get("account"))) {
+                                        if (spm.has("EZToken")) {
+                                            spm.remove("EZToken");
+                                        }
+                                    }
+                                }*/
+                                                                spm.save("account",userName);
+                                                                spm.save("token",token);
+                                                                Log.e(TAG + "token", token);
+                                                                //储存昵称
+                                                                spm.save("username", jsonObject.getString("username"));
+                                                                //储存帐号权限
+                                                                spm.save("userType", jsonObject.getString("type"));
+                                                                JSONArray jsonArray = jsonObject.getJSONArray("engine_list");
+                                                                int engineLength = jsonArray.length();
+                                                                if (engineLength > 0) {
+                                                                    for (int i = 0; i < engineLength; i++) {
+                                                                        JSONObject js = jsonArray.getJSONObject(i);
+                                                                        int engine_default = js.getInt("_default");
+                                                                        if (engine_default == 0) {//表示有默认的控制主机 如果第一次登陆的话是没有控制主机的
+                                                                            spm.save("engine_id", js.getString("engine_id"));
+                                                                            spm.save("is_belong", String.valueOf(js.getInt("is_belong")));
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    if (spm.has("engine_id")) {
+                                                                        spm.remove("engine_id");
+                                                                    }
+                                                                }
+                                                                if (spm.has("EZToken")) {//确保换张号的时候不会出现无法播放的问题
+                                                                    spm.remove("EZToken");
+                                                                }
+                                                                JSONObject jsonPath = jsonObject.getJSONObject("photo_path");
+                                                                String photoPath = jsonPath.getString("Android");
+                                                                Log.e("登陆界面头像路径", photoPath);
+                                                                spm.save("photo_path", photoPath);
+                                                                //可以在次做是否是第一次登陆的判断处理
+                                                                if (spm.has("isFirstLogin")) {//如果登录过，这个值肯定存在
+                                                                    //第一次登录后在手势密码页面和我的页面里边可以设定这个值，0跳过，1验证手势密码
+                                                                    if (!"0".equals(spm.get("isFirstLogin"))) {
+                                                                        if (spm.has("handlock")) {
+                                                                            Intent intent = new Intent(getApplicationContext(), GestureVerifyActivity.class);
+                                                                            startActivity(intent);
+                                                                        } else {
+                                                                            Intent intent3 = new Intent(getApplicationContext(), MainActivity.class);
+                                                                            startActivity(intent3);
+                                                                        }
+                                                                    } else {
+                                                                        Intent intent3 = new Intent(getApplicationContext(), MainActivity.class);
+                                                                        startActivity(intent3);
+                                                                    }
+                                                                } else {
+                                                                    Intent intent = new Intent(LoginActivity.this, GestureEditActivity.class);
+                                                                    startActivity(intent);
+                                                                }
+                                                                if (spm.has("account")) {
+                                                                    JPushInterface.setAlias(LoginActivity.this, spm.get("account"), new TagAliasCallback() {
+                                                                        @Override
+                                                                        public void gotResult(int i, String s, Set<String> set) {
+                                                                            if (i == 0) {//设置失败
+                                                                                // Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
+                                                                                Log.e("设置别名", "成功！！！！！" + s);
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                    //设置别名
+                                                                    // JPushInterface.setAlias(LoginActivity.this,1, spm.get("account"));
+                                                                }
+                                                            }else {
+                                                                Utils.dismissWaitDialog(mWaitDialog);
+                                                                Toast.makeText(LoginActivity.this,loginJson.getString("error"),Toast.LENGTH_LONG).show();
+                                                            }
+                                                        } catch (JSONException e) {
+                                                            Utils.dismissWaitDialog(mWaitDialog);
+                                                            e.printStackTrace();
+                                                        }
+                                                    }
+
+                                                    @Override
+                                                    public void onError(Throwable throwable, boolean b) {
+
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(CancelledException e) {
+
+                                                    }
+
+                                                    @Override
+                                                    public void onFinished() {
+
+                                                    }
+                                                });
+                                               // xutil.sendPost(2, LoginActivity.this);
+                                            } else {
+                                                Utils.dismissWaitDialog(mWaitDialog);
+                                                Toast.makeText(LoginActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
+                                            }
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+
+                                }
+
+                                @Override
+                                public void onError(Throwable throwable, boolean b) {
+                                    if (throwable instanceof HttpException) { // 网络错误
+                                        HttpException httpEx = (HttpException) throwable;
+                                        int responseCode = httpEx.getCode();
+                                        String responseMsg = httpEx.getMessage();
+                                        String errorResult = httpEx.getResult();
+                                        Toast.makeText(LoginActivity.this, responseMsg, Toast.LENGTH_LONG).show();
+                                    } else { // 其他错误
+                                        Toast.makeText(LoginActivity.this,"网络超时",Toast.LENGTH_LONG).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(CancelledException e) {
+
+                                }
+
+                                @Override
+                                public void onFinished() {
+
+                                }
+                            });
+                            //xutils.sendPost(1, this);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:layout_gravity="center"
+        android:layout_centerInParent="true"
+        android:id="@+id/dialog_alert_content"
+        android:textSize="@dimen/text_size_14"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dp_size_12"
+        android:paddingLeft="@dimen/dp_size_10"
+        android:paddingRight="@dimen/dp_size_10" />
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_size_1"
+        android:background="#CCCCCC"
+        android:layout_marginTop="@dimen/dp_size_12"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/dialog_alert_cancle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="取 消"
+            android:textSize="@dimen/text_size_16"
+            android:background="@color/white_00000000"/>
+        <ImageView
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#CCCCCC"/>
+        <Button
+            android:id="@+id/dialog_alert_enter"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="下 载"
+            android:textSize="@dimen/text_size_16"
+            android:background="@color/white_00000000"/>
+    </LinearLayout>
+
+</LinearLayout>

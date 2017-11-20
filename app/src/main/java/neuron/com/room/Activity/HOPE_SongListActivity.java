@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -61,7 +62,8 @@ import rx.schedulers.Schedulers;
 
 public class HOPE_SongListActivity extends BaseActivity implements View.OnClickListener,SeekBar.OnSeekBarChangeListener{
     private String TAG = "HOPE_SongListActivity";
-    private ImageButton back_ibtn, edit_ibtn;
+    private ImageButton back_ibtn;
+    private Button edit_ibtn;
     private TextView deviceName_tv, deviceRoom_tv;
     //蓝牙  本地   外接线
     private ImageButton bluetooth_ibtn,local_itbn, dl_ibtn;
@@ -101,6 +103,7 @@ public class HOPE_SongListActivity extends BaseActivity implements View.OnClickL
 
     private Subscriber<Long> mSubscriber;
     private Observable<Long> mObservable;
+
     private Toast toast;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -174,7 +177,7 @@ public class HOPE_SongListActivity extends BaseActivity implements View.OnClickL
         deviceRoomId = intent.getStringExtra("roomId");
         account = intent.getStringExtra("thirdaccount");
         back_ibtn = (ImageButton) findViewById(R.id.hopeactivity_back_ibtn);
-        edit_ibtn = (ImageButton) findViewById(R.id.hopeactivity_edit_btn);
+        edit_ibtn = (Button) findViewById(R.id.hopeactivity_edit_btn);
         deviceName_tv = (TextView) findViewById(R.id.hopeactivity_devicename_tv);
         deviceRoom_tv = (TextView) findViewById(R.id.hopeactivity_roomnama_tv);
         bluetooth_ibtn = (ImageButton) findViewById(R.id.hopeactivity_bt_ibtn);
@@ -197,15 +200,6 @@ public class HOPE_SongListActivity extends BaseActivity implements View.OnClickL
         pullToRefreshListView = (PullToRefreshListView) findViewById(R.id.hopeactivity_pulllistview);
         deviceName_tv.setText(deviceName);
         deviceRoom_tv.setText(deviceRoom);
-        /*WindowManager windowManager = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
-        int height = windowManager.getDefaultDisplay().getHeight();
-        Rect rectangle= new Rect();
-        Window window= getWindow();
-        window.getDecorView().getWindowVisibleDisplayFrame(rectangle);
-        int statusBarHeight= rectangle.top;
-        ViewGroup.LayoutParams viewGroup = pullToRefreshListView.getLayoutParams();
-        viewGroup.height = height - 688 - statusBarHeight;
-        pullToRefreshListView.setLayoutParams(viewGroup);*/
     }
     private void setListener(){
        back_ibtn.setOnClickListener(this);
@@ -231,7 +225,6 @@ public class HOPE_SongListActivity extends BaseActivity implements View.OnClickL
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.e(TAG + "SocketService", "onServiceConnected");
-            SocketService.IBinderSocket iBinderSocket = (SocketService.IBinderSocket) service;
         }
 
         @Override
@@ -261,7 +254,6 @@ public class HOPE_SongListActivity extends BaseActivity implements View.OnClickL
                                 Intent intent1 = new Intent(this, SocketService.class);
                                 intent1.putExtra("token", response.getData().getToken());
                                 bindService(intent1, serviceConnection, Service.BIND_AUTO_CREATE);//登录以后启动Socket
-                                getSongList(serialNum, songPage, 10, "", "", "");//登录成功获取歌曲列表
                             } else {
                                 throw new IllegalStateException(response.getData().getMessage());  //访问失败，抛出异常}
                             }
@@ -269,7 +261,7 @@ public class HOPE_SongListActivity extends BaseActivity implements View.OnClickL
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(response -> {
-
+                    getSongList(serialNum, songPage, 10, "", "", "");//登录成功获取歌曲列表
                 }, throwable -> {
 
                 });
@@ -547,7 +539,7 @@ public class HOPE_SongListActivity extends BaseActivity implements View.OnClickL
                     currentVol = currentVol-1;
                     OgeApplication.HopeSendData(HopeSocketApi.MusicVolumeSet(serialNum, currentVol, sharedPreferencesManager.get("HopeToken")));
                 } else {
-                    toastShoW("静音");
+                   // toastShoW("静音");
                 }
                 break;
             default:

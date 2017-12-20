@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -15,6 +13,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -56,186 +55,7 @@ public class AirQualityActivity extends BaseActivity implements View.OnClickList
     private String method = "GetControlledDeviceDetail";
     private String result = null;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://空气质量检测仪详情
-                    if (msg.what == 102) {
-                        result = (String) msg.obj;
-                        Log.e("sirResult", result);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject json = jsonMsg.getJSONObject("basic_msg");
-                                airName = json.getString("controlled_device_name");
-                                airRoom = json.getString("room_name");
-                                airStatus = json.getString("status");
-                                deviceName_tv.setText(airName);
-                                roomName_tv.setText(airRoom);
-                                if (!TextUtils.isEmpty(airStatus)) {
-                                    String[] s = airStatus.split(",");
 
-                                    int slength = s.length;
-                                    if (slength == 1) {
-                                        tempValue_tv.setText(s[0] + "℃");//温度
-                                    } else if (slength == 2) {
-                                        tempValue_tv.setText(s[0] + "℃");//温度
-                                        humidityValue_tv.setText(s[1] + "%");//湿度
-                                    } else if (slength == 3) {
-                                        tempValue_tv.setText(s[0] + "℃");//温度
-                                        humidityValue_tv.setText(s[1] + "%");//湿度
-                                        pm_tv.setText(s[2]);//pm2.5值
-                                    } else if (slength == 4) {
-                                        tempValue_tv.setText(s[0] + "℃");//温度
-                                        humidityValue_tv.setText(s[1] + "%");//湿度
-                                        pm_tv.setText(s[2]);//pm2.5值
-                                        formaldehydeValue_tv.setText(s[3] + "mg/m³");
-                                    } else if (slength == 5) {
-
-                                        tempValue_tv.setText(s[0] + "℃");//温度
-                                        humidityValue_tv.setText(s[1] + "%");//湿度
-                                        pm_tv.setText(s[2]);//pm2.5值
-                                        formaldehydeValue_tv.setText(s[3] + "mg/m³");
-                                        timeValue_tv.setText(s[4]);//时间
-                                    }
-                                    int pm2 = Integer.parseInt(s[2]);
-                                    Log.e(TAG + "pm2.5", String.valueOf(pm2));
-                                    if (pm2 > 0 && pm2 <= 25) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_1));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_1));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_1));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_1));
-                                    } else if (50 >= pm2 & pm2 > 25) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_35));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_35));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_35));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_35));
-                                    } else if (75 >= pm2 && pm2 > 50) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_75));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_75));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_75));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_75));
-                                    } else if (89 >= pm2 && pm2 > 75) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_80));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_80));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_80));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_80));
-                                    } else if (103 >= pm2 && pm2 > 89) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_90));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_90));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_90));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_90));
-                                    } else if (115 >= pm2 && pm2 > 103) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_115));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_115));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_115));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_115));
-                                    } else if (127 >= pm2 && pm2 > 115) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_120));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_120));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_120));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_120));
-                                    } else if (139 >= pm2 && pm2 > 127) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_135));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_135));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_135));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_135));
-                                    } else if (150 >= pm2 && pm2 > 139) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_150));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_150));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_150));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_150));
-                                    } else if (183 >= pm2 && pm2 > 150) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_160));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_160));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_160));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_160));
-                                    } else if (216 >= pm2 && pm2 > 183) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_200));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_200));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_200));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_200));
-                                    } else if (250 >= pm2 && pm2 > 216) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_250));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_250));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_250));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_250));
-                                    } else if (275 >= pm2 && pm2 > 250) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_275));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_275));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_275));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_275));
-                                    } else if (300 >= pm2 && pm2 > 275) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_300));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_300));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_300));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_300));
-                                    } else if (pm2 > 300) {
-                                        pm_tv.setTextColor(getResources().getColor(R.color.pm_325));
-                                        pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_325));
-                                        pmName_tv.setTextColor(getResources().getColor(R.color.pm_325));
-                                        pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_325));
-                                    }
-                                    JSONArray jsonA = jsonMsg.getJSONArray("other_msg");
-                                    if (jsonA.length() > 0) {
-                                        for (int i = 0; i < jsonA.length(); i++) {
-                                            JSONObject json1 = jsonA.getJSONObject(i);
-                                            String type = json1.getString("type");
-                                            if ("01".equals(type) || "03".equals(type)) {//pm2.5大于525触发一个警报
-                                                yPM_tv.setVisibility(View.VISIBLE);
-                                                pmScene_tv.setVisibility(View.VISIBLE);
-                                                yPM_tv.setText("PM2.5:>" + json1.getString("value") + "ug/m³");
-                                                pmScene_tv.setText(json1.getString("desc"));
-                                            } else if ("02".equals(type) || "04".equals(type)) {//甲醛大于60就触发一个警报
-                                                yFormaldehyde_tv.setVisibility(View.VISIBLE);
-                                                formaldehydeScene_tv.setVisibility(View.VISIBLE);
-                                                yFormaldehyde_tv.setText("TVOC:>" + json1.getString("value") + "mg/m³");
-                                                formaldehydeScene_tv.setText(json1.getString("desc"));
-                                            } else if ("05".equals(type)) {//温度大于设定温度会触发一个场景
-                                                yTempMax_tv.setVisibility(View.VISIBLE);
-                                                tempMaxScene_tv.setVisibility(View.VISIBLE);
-                                                yTempMax_tv.setText("温度:>" + json1.getString("value") + "℃");
-                                                tempMaxScene_tv.setText(json1.getString("desc"));
-                                            } else if ("06".equals(type)) {//温度小于设定温度会触发一个场景
-                                                yTempMin_tv.setVisibility(View.VISIBLE);
-                                                tempMinScene_tv.setVisibility(View.VISIBLE);
-                                                yTempMin_tv.setText("温度:<" + json1.getString("value") + "℃");
-                                                tempMinScene_tv.setText(json1.getString("desc"));
-                                            } else if ("07".equals(type)) {//湿度大于设定温度会触发一个场景
-                                                yHumidityMax_tv.setVisibility(View.VISIBLE);
-                                                humidityMaxScene_tv.setVisibility(View.VISIBLE);
-                                                yHumidityMax_tv.setText("湿度:>" + json1.getString("value") + "%");
-                                                humidityMaxScene_tv.setText(json1.getString("desc"));
-                                            } else if ("08".equals(type)) {//湿度小于设定温度会触发一个场景
-                                                yHumidityMin_tv.setVisibility(View.VISIBLE);
-                                                humidityMinScene_tv.setVisibility(View.VISIBLE);
-                                                yHumidityMin_tv.setText("湿度:<" + json1.getString("value") + "%");
-                                                humidityMinScene_tv.setText(json1.getString("desc"));
-                                            }
-                                        }
-                                    } else {
-                                        yuSheTitle_tv.setVisibility(View.GONE);
-                                    }
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Toast.makeText(AirQualityActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -305,7 +125,7 @@ public class AirQualityActivity extends BaseActivity implements View.OnClickList
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + airId + airType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("controlled_device_id", airId);
@@ -313,7 +133,189 @@ public class AirQualityActivity extends BaseActivity implements View.OnClickList
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+           // xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String sresult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        result = sresult;
+                        JSONObject jsonObject = new JSONObject(sresult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject json = jsonMsg.getJSONObject("basic_msg");
+                            airName = json.getString("controlled_device_name");
+                            airRoom = json.getString("room_name");
+                            airStatus = json.getString("status");
+                            deviceName_tv.setText(airName);
+                            roomName_tv.setText(airRoom);
+                            if (!TextUtils.isEmpty(airStatus)) {
+                                String[] s = airStatus.split(",");
+
+                                int slength = s.length;
+                                if (slength == 1) {
+                                    tempValue_tv.setText(s[0] + "℃");//温度
+                                } else if (slength == 2) {
+                                    tempValue_tv.setText(s[0] + "℃");//温度
+                                    humidityValue_tv.setText(s[1] + "%");//湿度
+                                } else if (slength == 3) {
+                                    tempValue_tv.setText(s[0] + "℃");//温度
+                                    humidityValue_tv.setText(s[1] + "%");//湿度
+                                    pm_tv.setText(s[2]);//pm2.5值
+                                } else if (slength == 4) {
+                                    tempValue_tv.setText(s[0] + "℃");//温度
+                                    humidityValue_tv.setText(s[1] + "%");//湿度
+                                    pm_tv.setText(s[2]);//pm2.5值
+                                    formaldehydeValue_tv.setText(s[3] + "mg/m³");
+                                } else if (slength == 5) {
+
+                                    tempValue_tv.setText(s[0] + "℃");//温度
+                                    humidityValue_tv.setText(s[1] + "%");//湿度
+                                    pm_tv.setText(s[2]);//pm2.5值
+                                    formaldehydeValue_tv.setText(s[3] + "mg/m³");
+                                    timeValue_tv.setText(s[4]);//时间
+                                }
+                                int pm2 = Integer.parseInt(s[2]);
+                                Log.e(TAG + "pm2.5", String.valueOf(pm2));
+                                if (pm2 > 0 && pm2 <= 25) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_1));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_1));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_1));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_1));
+                                } else if (50 >= pm2 & pm2 > 25) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_35));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_35));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_35));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_35));
+                                } else if (75 >= pm2 && pm2 > 50) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_75));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_75));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_75));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_75));
+                                } else if (89 >= pm2 && pm2 > 75) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_80));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_80));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_80));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_80));
+                                } else if (103 >= pm2 && pm2 > 89) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_90));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_90));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_90));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_90));
+                                } else if (115 >= pm2 && pm2 > 103) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_115));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_115));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_115));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_115));
+                                } else if (127 >= pm2 && pm2 > 115) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_120));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_120));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_120));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_120));
+                                } else if (139 >= pm2 && pm2 > 127) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_135));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_135));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_135));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_135));
+                                } else if (150 >= pm2 && pm2 > 139) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_150));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_150));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_150));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_150));
+                                } else if (183 >= pm2 && pm2 > 150) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_160));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_160));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_160));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_160));
+                                } else if (216 >= pm2 && pm2 > 183) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_200));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_200));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_200));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_200));
+                                } else if (250 >= pm2 && pm2 > 216) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_250));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_250));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_250));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_250));
+                                } else if (275 >= pm2 && pm2 > 250) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_275));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_275));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_275));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_275));
+                                } else if (300 >= pm2 && pm2 > 275) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_300));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_300));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_300));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_300));
+                                } else if (pm2 > 300) {
+                                    pm_tv.setTextColor(getResources().getColor(R.color.pm_325));
+                                    pm_youliang_tv.setTextColor(getResources().getColor(R.color.pm_325));
+                                    pmName_tv.setTextColor(getResources().getColor(R.color.pm_325));
+                                    pmUnit_tv.setTextColor(getResources().getColor(R.color.pm_325));
+                                }
+                                JSONArray jsonA = jsonMsg.getJSONArray("other_msg");
+                                if (jsonA.length() > 0) {
+                                    for (int i = 0; i < jsonA.length(); i++) {
+                                        JSONObject json1 = jsonA.getJSONObject(i);
+                                        String type = json1.getString("type");
+                                        if ("01".equals(type) || "03".equals(type)) {//pm2.5大于525触发一个警报
+                                            yPM_tv.setVisibility(View.VISIBLE);
+                                            pmScene_tv.setVisibility(View.VISIBLE);
+                                            yPM_tv.setText("PM2.5:>" + json1.getString("value") + "ug/m³");
+                                            pmScene_tv.setText(json1.getString("desc"));
+                                        } else if ("02".equals(type) || "04".equals(type)) {//甲醛大于60就触发一个警报
+                                            yFormaldehyde_tv.setVisibility(View.VISIBLE);
+                                            formaldehydeScene_tv.setVisibility(View.VISIBLE);
+                                            yFormaldehyde_tv.setText("TVOC:>" + json1.getString("value") + "mg/m³");
+                                            formaldehydeScene_tv.setText(json1.getString("desc"));
+                                        } else if ("05".equals(type)) {//温度大于设定温度会触发一个场景
+                                            yTempMax_tv.setVisibility(View.VISIBLE);
+                                            tempMaxScene_tv.setVisibility(View.VISIBLE);
+                                            yTempMax_tv.setText("温度:>" + json1.getString("value") + "℃");
+                                            tempMaxScene_tv.setText(json1.getString("desc"));
+                                        } else if ("06".equals(type)) {//温度小于设定温度会触发一个场景
+                                            yTempMin_tv.setVisibility(View.VISIBLE);
+                                            tempMinScene_tv.setVisibility(View.VISIBLE);
+                                            yTempMin_tv.setText("温度:<" + json1.getString("value") + "℃");
+                                            tempMinScene_tv.setText(json1.getString("desc"));
+                                        } else if ("07".equals(type)) {//湿度大于设定温度会触发一个场景
+                                            yHumidityMax_tv.setVisibility(View.VISIBLE);
+                                            humidityMaxScene_tv.setVisibility(View.VISIBLE);
+                                            yHumidityMax_tv.setText("湿度:>" + json1.getString("value") + "%");
+                                            humidityMaxScene_tv.setText(json1.getString("desc"));
+                                        } else if ("08".equals(type)) {//湿度小于设定温度会触发一个场景
+                                            yHumidityMin_tv.setVisibility(View.VISIBLE);
+                                            humidityMinScene_tv.setVisibility(View.VISIBLE);
+                                            yHumidityMin_tv.setText("湿度:<" + json1.getString("value") + "%");
+                                            humidityMinScene_tv.setText(json1.getString("desc"));
+                                        }
+                                    }
+                                } else {
+                                    yuSheTitle_tv.setVisibility(View.GONE);
+                                }
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Toast.makeText(AirQualityActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

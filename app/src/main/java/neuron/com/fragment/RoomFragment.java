@@ -53,6 +53,7 @@ import com.videogo.util.LogUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -174,222 +175,10 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
             super.handleMessage(msg);
             int arg1 = msg.arg1;
             switch (arg1) {
-                case 1://设备列表
-                    if (msg.what == 102) {
-                        String roomResult = (String) msg.obj;
-                        Log.e(TAG + "首页列表", roomResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        if (sharedPreferencesManager.has("isUpdate") && sharedPreferencesManager.get("isUpdate").equals(URLUtils.needUpdate)) {//有版本需要更新
-                            final AlertDialog builder = new AlertDialog.Builder(getActivity()).create();
-                            View v = View.inflate(getActivity(), R.layout.dialog_alert, null);
-                            TextView content = (TextView) v.findViewById(R.id.dialog_alert_content);
-                            Button cancle = (Button) v.findViewById(R.id.dialog_alert_cancle);
-                            Button enter = (Button) v.findViewById(R.id.dialog_alert_enter);
-                            content.setText("检测到新版本，请及时更新");
-                            builder.setView(v);
-                            cancle.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    sharedPreferencesManager.save("isUpdate", URLUtils.noUpdate);
-                                    builder.dismiss();
-                                }
-                            });
-                            enter.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    Intent intent = new Intent();
-                                    intent.setAction("android.intent.action.VIEW");
-                                    Uri uri = Uri.parse(sharedPreferencesManager.get("versionUrl"));
-                                    intent.setData(uri);
-                                    startActivity(intent);
-                                    builder.dismiss();
-                                }
-                            });
-                            builder.show();
-                        }
-                        try {
-                            JSONObject js = new JSONObject(roomResult);
-                            int status = js.getInt("status");
-                            if (status == 9999) {
-                                noDevice_rll.setVisibility(View.GONE);
-                                deviceLv.setVisibility(View.VISIBLE);
-                                JSONObject msgJs = js.getJSONObject("msg");
-                                int isMsg = msgJs.getInt("is_message");
-                                Log.e(TAG + "消息标记", String.valueOf(isMsg));
-                                if (isMsg == 0) {
-                                    //接收到熬manifragment传来的数据显示小红点
-                                    alertTishi_iv.setVisibility(View.VISIBLE);
-                                } else {
-                                    alertTishi_iv.setVisibility(View.GONE);
-                                }
-                                JSONArray deviceArray = msgJs.getJSONArray("controlled_device_list");//被控制设备列表
-                                Log.e(TAG + "首页设备列表", deviceArray.toString());
-                                int deviceLength = deviceArray.length();
-                                if (deviceLength > 0) {
-                                    deviceList = new ArrayList<RoomItemBean>();
-                                    RoomItemBean deviceBean;
-                                    for (int i = 0; i < deviceLength; i++) {
-                                        JSONObject roomJs = deviceArray.getJSONObject(i);
-                                        deviceBean = new RoomItemBean();
-                                        deviceBean.setDeviceId(roomJs.getString("controlled_device_id"));
-                                        deviceBean.setDeviceName(roomJs.getString("controlled_device_name"));
-                                        deviceBean.setDeviceSite(roomJs.getString("controlled_device_site"));
-                                        deviceBean.setSerialNumber(roomJs.getString("serial_number"));
-                                        deviceBean.setThirdAccount(roomJs.getString("third_account"));
-                                        String typeId = roomJs.getString("electric_type_id");
-                                        deviceBean.setDeviceType(typeId);
-                                        if (typeId.equals("33001") || typeId.equals("33009")) {//开关和灯在首页有开关按钮
-                                            deviceBean.setDeviceStatu(roomJs.getInt("status"));
-                                        }
-                                        String roomId = roomJs.getString("room_id");
-                                        deviceBean.setDeviceRoomId(roomId);
-                                        if (!TextUtils.isEmpty(roomId)) {
-                                            deviceBean.setDeviceRoom(roomJs.getString("room_name"));
-                                        }
-
-                                        deviceList.add(deviceBean);
-                                    }
-                                    if (isFirstRefresh) {//初始化获取数据
-                                        roomAdapter = new RoomAdapter(getActivity(), deviceList, handler, sharedPreferencesManager);
-                                        deviceLv.setAdapter(roomAdapter);
-                                    } else {//下拉刷新获取数据
-                                        if (roomName_tv.getText().toString().trim().equals("全部房间")) {
-                                            roomAdapter.setList(deviceList);
-                                            roomAdapter.notifyDataSetChanged();
-                                        }
-                                    }
-                                } else {
-                                    deviceLv.setVisibility(View.GONE);
-                                    noDevice_rll.setVisibility(View.VISIBLE);
-                                }
-                                JSONArray sceneArray = msgJs.getJSONArray("contextual_model_list");//场景列表
-                                Log.e(TAG + "场景列表", sceneArray.toString());
-                                int sceneLength = sceneArray.length();
-                                if (sceneLength > 0) {
-                                    sceneGv.setVisibility(View.VISIBLE);
-                                    noScene_rll.setVisibility(View.GONE);
-                                    sceneItemBeanList = new ArrayList<SceneItemBean>();
-                                    SceneItemBean sceneItemBean;
-                                    for (int j = 0; j < sceneLength; j++) {
-                                        JSONObject sceneJs = sceneArray.getJSONObject(j);
-                                        sceneItemBean = new SceneItemBean();
-                                        sceneItemBean.setSceneId(sceneJs.getString("contextual_model_id"));
-                                        sceneItemBean.setSceneName(sceneJs.getString("contextual_model_name"));
-                                        sceneItemBean.setIsDefault(sceneJs.getInt("contextual_model_type"));
-                                        //sceneItemBean.setOpenTime(sceneJs.getString("open_time"));'
-                                        int img = sceneJs.getInt("contextual_model_img");
-                                        // Log.e(TAG + "场景图标", String.valueOf(img));
-                                        sceneItemBean.setSceneImg(img);
-                                        sceneItemBean.setSceneStatus(sceneJs.getInt("status"));
-                                        sceneItemBeanList.add(sceneItemBean);
-                                    }
-                                    Log.e(TAG + "场景数据长度", String.valueOf(sceneItemBeanList.size()) + "," + isFirstRefresh);
-                                    if (isFirstRefresh) {
-                                        sceneAdapter = new SceneAdapter(sceneItemBeanList, getActivity());
-                                        sceneGv.setAdapter(sceneAdapter);
-                                        isFirstRefresh = false;
-                                    } else {
-                                        sceneAdapter.setList(sceneItemBeanList);
-                                        sceneAdapter.notifyDataSetChanged();
-                                    }
-                                } else {
-                                    sceneGv.setVisibility(View.GONE);
-                                    noScene_rll.setVisibility(View.VISIBLE);
-                                }
-                            } else if (status == 1000 || status == 1001) {
-                                Toast.makeText(getActivity(), "帐号在别处登录",Toast.LENGTH_LONG).show();
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_LONG).show();
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 5://操作设备
-                    if (msg.what == 102) {
-                        try {
-                            String result = (String) msg.obj;
-                            Log.e(TAG + "result", result);
-                            if (mWaitDialog.isShowing()) {
-
-                                Utils.dismissWaitDialog(mWaitDialog);
-                            }
-                            JSONObject json = new JSONObject(result);
-                            int status1 = json.getInt("status");
-                            if (status1 == 9999) {
-                                reslutShow();
-                                //Toast.makeText(getActivity(), "操作成功", Toast.LENGTH_LONG).show();
-                            } else if (status1 == 1000 || status1 == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            } else {
-                                Toast.makeText(getActivity(), json.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        if (mWaitDialog.isShowing()) {
-
-                            Utils.dismissWaitDialog(mWaitDialog);
-                        }
-                        Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 4://根据房间获取设备列表
-                    if (msg.what == 102) {
-                        String dResult = (String) msg.obj;
-                        Log.e(TAG + "房间下的设备列表",dResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(dResult);
-                            int status2 = jsonObject.getInt("status");
-                            if (status2 == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("electric_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    if (deviceList == null) {
-                                        deviceList = new ArrayList<RoomItemBean>();
-                                    } else {
-                                        deviceList.clear();
-                                    }
-                                    RoomItemBean dBean;
-                                    for (int i = 0; i < length; i++) {
-                                        dBean = new RoomItemBean();
-                                        JSONObject jsonB = jsonArray.getJSONObject(i);
-                                        dBean.setDeviceId(jsonB.getString("controlled_device_id"));
-                                        dBean.setDeviceName(jsonB.getString("controlled_device_name"));
-                                        dBean.setDeviceSite(jsonB.getString("controlled_device_site"));
-                                        dBean.setDeviceRoom(jsonB.getString("room_name"));
-                                        dBean.setDeviceRoomId(jsonB.getString("room_id"));
-                                        dBean.setSerialNumber(jsonB.getString("serial_number"));
-                                        String t = jsonB.getString("electric_type_id");
-                                        dBean.setDeviceType(t);
-                                        if (!"33008".equals(t) && !"33010".equals(t) && !"33006".equals(t) && !"33007".equals(t)&& !"33003".equals(t)) {
-                                            dBean.setDeviceStatu(jsonB.getInt("status"));
-                                        }
-                                        deviceList.add(dBean);
-                                    }
-                                    roomAdapter.setList(deviceList);
-                                    roomAdapter.notifyDataSetChanged();
-                                }
-                            }else if (status2 == 1000 || status2 == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
                 case 2://摄像头
                     EZDeviceInfo deviceInfo = (EZDeviceInfo) msg.obj;
                     if (deviceInfo.getCameraNum() == 1 && deviceInfo.getCameraInfoList() != null && deviceInfo.getCameraInfoList().size() == 1) {
                         LogUtil.d(TAG, "cameralist have one camera");
-
                         final EZCameraInfo cameraInfo = EZUtils.getCameraInfoFromDevice(deviceInfo, 0);
                         cameraInfo.setCameraName(cameraName);
                         if (sharedPreferencesManager.has(cameraSerial)) {
@@ -413,136 +202,6 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                         getTime();
                     }else if (errorCode ==110003) {//token 异常
                         getTime();
-                    }
-                    break;
-                case 6://房间列表
-                    if (msg.what == 102) {
-                        String roomResult = (String) msg.obj;
-                        Log.e(TAG + "房间列表", roomResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(roomResult);
-                            int status3 = jsonObject.getInt("status");
-                            if (status3 == 9999) {
-                                JSONArray roomArray = jsonObject.getJSONArray("room_list");
-                                int roomLength = roomArray.length();
-                                if (roomLength > 0) {
-                                    listSY = new ArrayList<SY_PopuWBean>();
-                                    SY_PopuWBean sy_popuWBean;
-                                    for (int k = 0; k < roomLength; k++) {
-                                        JSONObject roomJs = roomArray.getJSONObject(k);
-                                        sy_popuWBean = new SY_PopuWBean();
-                                        sy_popuWBean.setHomeName(roomJs.getString("room_name"));
-                                        sy_popuWBean.setHomeId(roomJs.getString("room_id"));
-                                        listSY.add(sy_popuWBean);
-                                    }
-                                    if (sy_popuWAdapter == null) {
-                                        sy_popuWAdapter = new SY_PopuWAdapter(getActivity(), listSY);
-                                        Log.e(TAG + "适配器中数据长度", String.valueOf(sy_popuWAdapter.getCount()));
-                                        showPopuWindow(0);
-                                    } else {
-                                        sy_popuWAdapter.setList(listSY);
-                                        showPopuWindow(1);
-                                    }
-                                }
-                            }else if (status3 == 1000 || status3 == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 7://情景模式操作
-                    if (msg.what == 102) {
-                        String controlRestlt = (String) msg.obj;
-                        Log.e("操作场景" + TAG, controlRestlt);
-                        try {
-                            JSONObject json = new JSONObject(controlRestlt);
-                            int status3 = json.getInt("status");
-                            if (status3 == 9999) {
-                                getSceneList();//操作成功更新场景列表
-                            }else if (status3 == 1000 || status3 == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }else {
-                                Utils.showDialog(getActivity(), json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    } else {
-                        Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case 8://获取萤石服务器时间
-                    String EZTimeResult = (String) msg.obj;
-                    try {
-                        JSONObject json=new JSONObject(EZTimeResult);
-                        JSONObject result=json.getJSONObject("result");
-                        JSONObject data=result.getJSONObject("data");
-                        String EzTime= data.getString("serverTime");
-                        sharedPreferencesManager.save("EZTime", EzTime);
-                        getAccessToken(cameraAccount,EzTime);
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    break;
-                case 9://获取token
-                    String EZResult = (String) msg.obj;
-                    try {
-                        JSONObject json = new JSONObject(EZResult);
-                        JSONObject js1 = json.getJSONObject("result");
-                        int code = js1.getInt("code");
-                        if (code == 200) {
-                            JSONObject js = js1.getJSONObject("data");
-                            String accessTonken = js.getString("accessToken");
-                            sharedPreferencesManager.save("EZToken", accessTonken);
-                            Log.e("Openservicetoken", accessTonken);
-                            OgeApplication.getOpenSDK().setAccessToken(accessTonken);
-                            if (cameraPosition != -1) {
-                                getCameraDeviceInfo(cameraPosition);
-                            }
-                        }
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    break;
-                case 10://有状态的场景列表。更新首页场景列表
-                    if (msg.what == 102) {
-                        String sceneListResult = (String) msg.obj;
-                        Log.e(TAG + "有状态的场景列表",sceneListResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(sceneListResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonMsg = jsonObject.getJSONArray("contextual_model_list");
-                                int length = jsonMsg.length();
-                                if (length > 0) {
-                                    sceneItemBeanList.clear();
-                                    SceneItemBean sceneItemBean;
-                                    for (int j = 0; j < length; j++) {
-                                        JSONObject sceneJs = jsonMsg.getJSONObject(j);
-                                        sceneItemBean = new SceneItemBean();
-                                        sceneItemBean.setSceneId(sceneJs.getString("contextual_model_id"));
-                                        sceneItemBean.setSceneName(sceneJs.getString("contextual_model_name"));
-                                        sceneItemBean.setIsDefault(sceneJs.getInt("contextual_model_type"));
-                                        //sceneItemBean.setOpenTime(sceneJs.getString("open_time"));'
-                                        int img = sceneJs.getInt("contextual_model_img");
-                                        // Log.e(TAG + "场景图标", String.valueOf(img));
-                                        sceneItemBean.setSceneImg(img);
-                                        sceneItemBean.setSceneStatus(sceneJs.getInt("status"));
-                                        sceneItemBeanList.add(sceneItemBean);
-                                    }
-                                    //sceneAdapter.setList(sceneItemBeanList);
-                                    sceneAdapter.notifyDataSetChanged();
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
                     }
                     break;
                 default:
@@ -777,13 +436,166 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
             try {
                 String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
                 String sign = MD5Utils.MD5Encode(aesAccount + engine_id + METHOD + token + URLUtils.MD5_SIGN, "");
-                XutilsHelper xutil = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+                XutilsHelper xutil = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
                 xutil.add("account", aesAccount);
                 xutil.add("engine_id", engine_id);
                 xutil.add("method", METHOD);
                 xutil.add("token", token);
                 xutil.add("sign", sign);
-                xutil.sendPost(order, getActivity());
+                //xutil.sendPost(order, getActivity());
+                xutil.sendPost2(new Callback.CommonCallback<String>() {
+                    @Override
+                    public void onSuccess(String roomResult) {
+                        switch(order){
+                            case 1:
+                                Log.e(TAG + "首页列表", roomResult);
+                                Utils.dismissWaitDialog(mWaitDialog);
+                                if (sharedPreferencesManager.has("isUpdate") && sharedPreferencesManager.get("isUpdate").equals(URLUtils.needUpdate)) {//有版本需要更新
+                                    final AlertDialog builder = new AlertDialog.Builder(getActivity()).create();
+                                    View v = View.inflate(getActivity(), R.layout.dialog_alert, null);
+                                    TextView content = (TextView) v.findViewById(R.id.dialog_alert_content);
+                                    Button cancle = (Button) v.findViewById(R.id.dialog_alert_cancle);
+                                    Button enter = (Button) v.findViewById(R.id.dialog_alert_enter);
+                                    content.setText("检测到新版本，请及时更新");
+                                    builder.setView(v);
+                                    cancle.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            sharedPreferencesManager.save("isUpdate", URLUtils.noUpdate);
+                                            builder.dismiss();
+                                        }
+                                    });
+                                    enter.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            Intent intent = new Intent();
+                                            intent.setAction("android.intent.action.VIEW");
+                                            Uri uri = Uri.parse(sharedPreferencesManager.get("versionUrl"));
+                                            intent.setData(uri);
+                                            startActivity(intent);
+                                            builder.dismiss();
+                                        }
+                                    });
+                                    builder.show();
+                                }
+                                try {
+                                    JSONObject js = new JSONObject(roomResult);
+                                    int status = js.getInt("status");
+                                    if (status == 9999) {
+                                        noDevice_rll.setVisibility(View.GONE);
+                                        deviceLv.setVisibility(View.VISIBLE);
+                                        JSONObject msgJs = js.getJSONObject("msg");
+                                        int isMsg = msgJs.getInt("is_message");
+                                        Log.e(TAG + "消息标记", String.valueOf(isMsg));
+                                        if (isMsg == 0) {
+                                            //接收到熬manifragment传来的数据显示小红点
+                                            alertTishi_iv.setVisibility(View.VISIBLE);
+                                        } else {
+                                            alertTishi_iv.setVisibility(View.GONE);
+                                        }
+                                        JSONArray deviceArray = msgJs.getJSONArray("controlled_device_list");//被控制设备列表
+                                        Log.e(TAG + "首页设备列表", deviceArray.toString());
+                                        int deviceLength = deviceArray.length();
+                                        if (deviceLength > 0) {
+                                            deviceList = new ArrayList<RoomItemBean>();
+                                            RoomItemBean deviceBean;
+                                            for (int i = 0; i < deviceLength; i++) {
+                                                JSONObject roomJs = deviceArray.getJSONObject(i);
+                                                deviceBean = new RoomItemBean();
+                                                deviceBean.setDeviceId(roomJs.getString("controlled_device_id"));
+                                                deviceBean.setDeviceName(roomJs.getString("controlled_device_name"));
+                                                deviceBean.setDeviceSite(roomJs.getString("controlled_device_site"));
+                                                deviceBean.setSerialNumber(roomJs.getString("serial_number"));
+                                                deviceBean.setThirdAccount(roomJs.getString("third_account"));
+                                                String typeId = roomJs.getString("electric_type_id");
+                                                deviceBean.setDeviceType(typeId);
+                                                if (typeId.equals("33001") || typeId.equals("33009")) {//开关和灯在首页有开关按钮
+                                                    deviceBean.setDeviceStatu(roomJs.getInt("status"));
+                                                }
+                                                String roomId = roomJs.getString("room_id");
+                                                deviceBean.setDeviceRoomId(roomId);
+                                                if (!TextUtils.isEmpty(roomId)) {
+                                                    deviceBean.setDeviceRoom(roomJs.getString("room_name"));
+                                                }
+                                                deviceList.add(deviceBean);
+                                            }
+                                            if (isFirstRefresh) {//初始化获取数据
+                                                roomAdapter = new RoomAdapter(getActivity(), deviceList, handler, sharedPreferencesManager);
+                                                deviceLv.setAdapter(roomAdapter);
+                                            } else {//下拉刷新获取数据
+                                                if (roomName_tv.getText().toString().trim().equals("全部房间")) {
+                                                    roomAdapter.setList(deviceList);
+                                                    roomAdapter.notifyDataSetChanged();
+                                                }
+                                            }
+                                        } else {
+                                            deviceLv.setVisibility(View.GONE);
+                                            noDevice_rll.setVisibility(View.VISIBLE);
+                                        }
+                                        JSONArray sceneArray = msgJs.getJSONArray("contextual_model_list");//场景列表
+                                        Log.e(TAG + "场景列表", sceneArray.toString());
+                                        int sceneLength = sceneArray.length();
+                                        if (sceneLength > 0) {
+                                            sceneGv.setVisibility(View.VISIBLE);
+                                            noScene_rll.setVisibility(View.GONE);
+                                            sceneItemBeanList = new ArrayList<SceneItemBean>();
+                                            SceneItemBean sceneItemBean;
+                                            for (int j = 0; j < sceneLength; j++) {
+                                                JSONObject sceneJs = sceneArray.getJSONObject(j);
+                                                sceneItemBean = new SceneItemBean();
+                                                sceneItemBean.setSceneId(sceneJs.getString("contextual_model_id"));
+                                                sceneItemBean.setSceneName(sceneJs.getString("contextual_model_name"));
+                                                sceneItemBean.setIsDefault(sceneJs.getInt("contextual_model_type"));
+                                                //sceneItemBean.setOpenTime(sceneJs.getString("open_time"));'
+                                                int img = sceneJs.getInt("contextual_model_img");
+                                                // Log.e(TAG + "场景图标", String.valueOf(img));
+                                                sceneItemBean.setSceneImg(img);
+                                                sceneItemBean.setSceneStatus(sceneJs.getInt("status"));
+                                                sceneItemBeanList.add(sceneItemBean);
+                                            }
+                                            Log.e(TAG + "场景数据长度", String.valueOf(sceneItemBeanList.size()) + "," + isFirstRefresh);
+                                            if (isFirstRefresh) {
+                                                sceneAdapter = new SceneAdapter(sceneItemBeanList, getActivity());
+                                                sceneGv.setAdapter(sceneAdapter);
+                                                isFirstRefresh = false;
+                                            } else {
+                                                sceneAdapter.setList(sceneItemBeanList);
+                                                sceneAdapter.notifyDataSetChanged();
+                                            }
+                                        } else {
+                                            sceneGv.setVisibility(View.GONE);
+                                            noScene_rll.setVisibility(View.VISIBLE);
+                                        }
+                                    } else if (status == 1000 || status == 1001) {
+                                        Toast.makeText(getActivity(), "帐号在别处登录",Toast.LENGTH_LONG).show();
+                                        Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                        startActivity(intent);
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            break;
+                            default:
+                            break;
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable, boolean b) {
+                        Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_LONG).show();
+                        Utils.dismissWaitDialog(mWaitDialog);
+                    }
+
+                    @Override
+                    public void onCancelled(CancelledException e) {
+
+                    }
+
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -892,14 +704,74 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     String roomId = listSY.get(position).getHomeId();
                     Log.e(TAG + "房间", roomId);
                     String sign = MD5Utils.MD5Encode(aesAccount + engine_id + QUERYLIST + roomId + token + URLUtils.MD5_SIGN, "");
-                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
                     xutilsHelper.add("account", aesAccount);
                     xutilsHelper.add("engine_id", engine_id);
                     xutilsHelper.add("room_id", roomId);
                     xutilsHelper.add("token", token);
                     xutilsHelper.add("method", QUERYLIST);
                     xutilsHelper.add("sign", sign);
-                    xutilsHelper.sendPost(4, getActivity());
+                    //xutilsHelper.sendPost(4, getActivity());
+                    xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                        @Override
+                        public void onSuccess(String dResult) {
+                            Log.e(TAG + "房间下的设备列表",dResult);
+                            try {
+                                JSONObject jsonObject = new JSONObject(dResult);
+                                int status2 = jsonObject.getInt("status");
+                                if (status2 == 9999) {
+                                    JSONArray jsonArray = jsonObject.getJSONArray("electric_list");
+                                    int length = jsonArray.length();
+                                    if (length > 0) {
+                                        if (deviceList == null) {
+                                            deviceList = new ArrayList<RoomItemBean>();
+                                        } else {
+                                            deviceList.clear();
+                                        }
+                                        RoomItemBean dBean;
+                                        for (int i = 0; i < length; i++) {
+                                            dBean = new RoomItemBean();
+                                            JSONObject jsonB = jsonArray.getJSONObject(i);
+                                            dBean.setDeviceId(jsonB.getString("controlled_device_id"));
+                                            dBean.setDeviceName(jsonB.getString("controlled_device_name"));
+                                            dBean.setDeviceSite(jsonB.getString("controlled_device_site"));
+                                            dBean.setDeviceRoom(jsonB.getString("room_name"));
+                                            dBean.setDeviceRoomId(jsonB.getString("room_id"));
+                                            dBean.setSerialNumber(jsonB.getString("serial_number"));
+                                            String t = jsonB.getString("electric_type_id");
+                                            dBean.setDeviceType(t);
+                                            if (t.equals("33001") || t.equals("33009")) {
+                                                dBean.setDeviceStatu(jsonB.getInt("status"));
+                                            }
+                                            deviceList.add(dBean);
+                                        }
+                                        roomAdapter.setList(deviceList);
+                                        roomAdapter.notifyDataSetChanged();
+                                    }
+                                }else if (status2 == 1000 || status2 == 1001) {
+                                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                    startActivity(intent);
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable throwable, boolean b) {
+
+                        }
+
+                        @Override
+                        public void onCancelled(CancelledException e) {
+
+                        }
+
+                        @Override
+                        public void onFinished() {
+
+                        }
+                    });
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -937,13 +809,66 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + QUERYHOMELIST + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engine_id);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", QUERYHOMELIST);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(6, getActivity());
+           // xutilsHelper.sendPost(6, getActivity());
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String roomResult) {
+                    Log.e(TAG + "房间列表", roomResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(roomResult);
+                        int status3 = jsonObject.getInt("status");
+                        if (status3 == 9999) {
+                            JSONArray roomArray = jsonObject.getJSONArray("room_list");
+                            int roomLength = roomArray.length();
+                            if (roomLength > 0) {
+                                listSY = new ArrayList<SY_PopuWBean>();
+                                SY_PopuWBean sy_popuWBean;
+                                for (int k = 0; k < roomLength; k++) {
+                                    JSONObject roomJs = roomArray.getJSONObject(k);
+                                    sy_popuWBean = new SY_PopuWBean();
+                                    sy_popuWBean.setHomeName(roomJs.getString("room_name"));
+                                    sy_popuWBean.setHomeId(roomJs.getString("room_id"));
+                                    listSY.add(sy_popuWBean);
+                                }
+                                if (sy_popuWAdapter == null) {
+                                    sy_popuWAdapter = new SY_PopuWAdapter(getActivity(), listSY);
+                                    Log.e(TAG + "适配器中数据长度", String.valueOf(sy_popuWAdapter.getCount()));
+                                    showPopuWindow(0);
+                                } else {
+                                    sy_popuWAdapter.setList(listSY);
+                                    showPopuWindow(1);
+                                }
+                            }
+                        }else if (status3 == 1000 || status3 == 1001) {
+                            Intent intent = new Intent(getActivity(), LoginActivity.class);
+                            startActivity(intent);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -976,7 +901,7 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + "2" + engine_id + method + sceneOrder + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engine_id);
             xutilsHelper.add("device_id", sceneId);
@@ -985,7 +910,42 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(7, getActivity());
+            //xutilsHelper.sendPost(7, getActivity());
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String controlRestlt) {
+                    Log.e("操作场景" + TAG, controlRestlt);
+                    try {
+                        JSONObject json = new JSONObject(controlRestlt);
+                        int status3 = json.getInt("status");
+                        if (status3 == 9999) {
+                            getSceneList();//操作成功更新场景列表
+                        }else if (status3 == 1000 || status3 == 1001) {
+                            Intent intent = new Intent(getActivity(), LoginActivity.class);
+                            startActivity(intent);
+                        }else {
+                            Utils.showDialog(getActivity(), json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1006,13 +966,62 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + methodSceneList + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engine_id);
             xutils.add("token", token);
             xutils.add("method", methodSceneList);
             xutils.add("sign", sign);
-            xutils.sendPost(10, getActivity());
+           // xutils.sendPost(10, getActivity());
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String sceneListResult) {
+                    Log.e(TAG + "有状态的场景列表",sceneListResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(sceneListResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonMsg = jsonObject.getJSONArray("contextual_model_list");
+                            int length = jsonMsg.length();
+                            if (length > 0) {
+                                sceneItemBeanList.clear();
+                                SceneItemBean sceneItemBean;
+                                for (int j = 0; j < length; j++) {
+                                    JSONObject sceneJs = jsonMsg.getJSONObject(j);
+                                    sceneItemBean = new SceneItemBean();
+                                    sceneItemBean.setSceneId(sceneJs.getString("contextual_model_id"));
+                                    sceneItemBean.setSceneName(sceneJs.getString("contextual_model_name"));
+                                    sceneItemBean.setIsDefault(sceneJs.getInt("contextual_model_type"));
+                                    //sceneItemBean.setOpenTime(sceneJs.getString("open_time"));'
+                                    int img = sceneJs.getInt("contextual_model_img");
+                                    // Log.e(TAG + "场景图标", String.valueOf(img));
+                                    sceneItemBean.setSceneImg(img);
+                                    sceneItemBean.setSceneStatus(sceneJs.getInt("status"));
+                                    sceneItemBeanList.add(sceneItemBean);
+                                }
+                                //sceneAdapter.setList(sceneItemBeanList);
+                                sceneAdapter.notifyDataSetChanged();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1021,10 +1030,41 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
      * 获取萤石服务器时间
      */
     public void getTime(){
-        XutilsHelper xutil = new XutilsHelper(URLUtils.EZTIME_URL, handler);
+        XutilsHelper xutil = new XutilsHelper(URLUtils.EZTIME_URL);
         xutil.add("id", "12345646");
         xutil.add("appKey", OgeApplication.AppKey);
-        xutil.sendPost(8, getActivity());
+        //xutil.sendPost(8, getActivity());
+        xutil.sendPost2(new Callback.CommonCallback<String>() {
+            @Override
+            public void onSuccess(String EZTimeResult) {
+                try {
+                    JSONObject json=new JSONObject(EZTimeResult);
+                    JSONObject result=json.getJSONObject("result");
+                    JSONObject data=result.getJSONObject("data");
+                    String EzTime= data.getString("serverTime");
+                    sharedPreferencesManager.save("EZTime", EzTime);
+                    getAccessToken(cameraAccount,EzTime);
+                } catch (JSONException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable, boolean b) {
+
+            }
+
+            @Override
+            public void onCancelled(CancelledException e) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
     }
     /**
      * 	第三方获取accesstoken值
@@ -1047,9 +1087,47 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
             json.put("system", json1);
             json.put("method", method_getAccessToken);
             json.put("params", json2);
-            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL, handler);
+            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL);
             xutil.addRequestParams(json);
-            xutil.sendPost(9, getActivity());
+            //xutil.sendPost(9, getActivity());
+            xutil.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String EZResult) {
+                    try {
+                        JSONObject json = new JSONObject(EZResult);
+                        JSONObject js1 = json.getJSONObject("result");
+                        int code = js1.getInt("code");
+                        if (code == 200) {
+                            JSONObject js = js1.getJSONObject("data");
+                            String accessTonken = js.getString("accessToken");
+                            sharedPreferencesManager.save("EZToken", accessTonken);
+                            Log.e("Openservicetoken", accessTonken);
+                            OgeApplication.getOpenSDK().setAccessToken(accessTonken);
+                            if (cameraPosition != -1) {
+                                getCameraDeviceInfo(cameraPosition);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
 
         } catch (JSONException e) {
             // TODO Auto-generated catch block
@@ -1922,7 +2000,7 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                             + order_id
                             + token
                             + URLUtils.MD5_SIGN, "");
-                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
                     xutilsHelper.add("account", aesAccount);
                     xutilsHelper.add("engine_id", engine_id);
                     xutilsHelper.add("device_id", temp.getDeviceId());
@@ -1931,7 +2009,49 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     xutilsHelper.add("token", token);
                     xutilsHelper.add("method", "DoOrders");
                     xutilsHelper.add("sign", sign);
-                    xutilsHelper.sendPost(5, getActivity());
+                    //xutilsHelper.sendPost(5, getActivity());
+                    xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                        @Override
+                        public void onSuccess(String result) {
+                            try {
+                                Log.e(TAG + "result", result);
+                                if (mWaitDialog.isShowing()) {
+                                    Utils.dismissWaitDialog(mWaitDialog);
+                                }
+                                JSONObject json = new JSONObject(result);
+                                int status1 = json.getInt("status");
+                                if (status1 == 9999) {
+                                    reslutShow();
+                                    //Toast.makeText(getActivity(), "操作成功", Toast.LENGTH_LONG).show();
+                                } else if (status1 == 1000 || status1 == 1001) {
+                                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(getActivity(), json.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable throwable, boolean b) {
+                            if (mWaitDialog.isShowing()) {
+                                Utils.dismissWaitDialog(mWaitDialog);
+                            }
+                            Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onCancelled(CancelledException e) {
+
+                        }
+
+                        @Override
+                        public void onFinished() {
+
+                        }
+                    });
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -1952,7 +2072,7 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                             + order_id
                             + token
                             + URLUtils.MD5_SIGN, "");
-                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
                     xutilsHelper.add("account", aesAccount);
                     xutilsHelper.add("engine_id", engine_id);
                     xutilsHelper.add("device_id", temp.getDeviceId());
@@ -1961,7 +2081,50 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     xutilsHelper.add("token", token);
                     xutilsHelper.add("method", "DoOrders");
                     xutilsHelper.add("sign", sign);
-                    xutilsHelper.sendPost(5, getActivity());
+                   // xutilsHelper.sendPost(5, getActivity());
+                    xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                        @Override
+                        public void onSuccess(String result) {
+                            try {
+                                Log.e(TAG + "result", result);
+                                if (mWaitDialog.isShowing()) {
+
+                                    Utils.dismissWaitDialog(mWaitDialog);
+                                }
+                                JSONObject json = new JSONObject(result);
+                                int status1 = json.getInt("status");
+                                if (status1 == 9999) {
+                                    reslutShow();
+                                    //Toast.makeText(getActivity(), "操作成功", Toast.LENGTH_LONG).show();
+                                } else if (status1 == 1000 || status1 == 1001) {
+                                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(getActivity(), json.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable throwable, boolean b) {
+                            if (mWaitDialog.isShowing()) {
+                                Utils.dismissWaitDialog(mWaitDialog);
+                            }
+                            Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onCancelled(CancelledException e) {
+
+                        }
+
+                        @Override
+                        public void onFinished() {
+
+                        }
+                    });
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -1997,7 +2160,7 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     Utils.showWaitDialog(getString(R.string.loadtext_load), getActivity(), mWaitDialog);
                     String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
                     String sign = MD5Utils.MD5Encode(aesAccount + temp.getDeviceId() + engine_id + tvKeyId + ConstantValue.REMOTE_CONTROL_TV + token + URLUtils.MD5_SIGN, "");
-                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
                     xutilsHelper.add("account", aesAccount);
                     xutilsHelper.add("engine_id", engine_id);
                     xutilsHelper.add("controlled_device_id", temp.getDeviceId());
@@ -2005,7 +2168,50 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     xutilsHelper.add("token", token);
                     xutilsHelper.add("method", ConstantValue.REMOTE_CONTROL_TV);
                     xutilsHelper.add("sign", sign);
-                    xutilsHelper.sendPost(5, getActivity());
+                   // xutilsHelper.sendPost(5, getActivity());
+                    xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                        @Override
+                        public void onSuccess(String result) {
+                            try {
+                                Log.e(TAG + "result", result);
+                                if (mWaitDialog.isShowing()) {
+
+                                    Utils.dismissWaitDialog(mWaitDialog);
+                                }
+                                JSONObject json = new JSONObject(result);
+                                int status1 = json.getInt("status");
+                                if (status1 == 9999) {
+                                    reslutShow();
+                                    //Toast.makeText(getActivity(), "操作成功", Toast.LENGTH_LONG).show();
+                                } else if (status1 == 1000 || status1 == 1001) {
+                                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(getActivity(), json.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable throwable, boolean b) {
+                            if (mWaitDialog.isShowing()) {
+                                Utils.dismissWaitDialog(mWaitDialog);
+                            }
+                            Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onCancelled(CancelledException e) {
+
+                        }
+
+                        @Override
+                        public void onFinished() {
+
+                        }
+                    });
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -2043,7 +2249,7 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     Utils.showWaitDialog(getString(R.string.loadtext_load), getActivity(), mWaitDialog);
                     String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
                     String sign = MD5Utils.MD5Encode(aesAccount + temp.getDeviceId() + engine_id + ConstantValue.REMOTE_CONTROL_AC + modeType + temperature + token + wind_speed + URLUtils.MD5_SIGN, "");
-                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+                    XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
                     xutilsHelper.add("account", aesAccount);
                     xutilsHelper.add("engine_id", engine_id);
                     xutilsHelper.add("controlled_device_id", temp.getDeviceId());
@@ -2053,7 +2259,50 @@ public class RoomFragment extends Fragment implements View.OnClickListener,View.
                     xutilsHelper.add("token", token);
                     xutilsHelper.add("method", ConstantValue.REMOTE_CONTROL_AC);
                     xutilsHelper.add("sign", sign);
-                    xutilsHelper.sendPost(5, getActivity());
+                   // xutilsHelper.sendPost(5, getActivity());
+                    xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                        @Override
+                        public void onSuccess(String result) {
+                            try {
+                                Log.e(TAG + "result", result);
+                                if (mWaitDialog.isShowing()) {
+
+                                    Utils.dismissWaitDialog(mWaitDialog);
+                                }
+                                JSONObject json = new JSONObject(result);
+                                int status1 = json.getInt("status");
+                                if (status1 == 9999) {
+                                    reslutShow();
+                                    //Toast.makeText(getActivity(), "操作成功", Toast.LENGTH_LONG).show();
+                                } else if (status1 == 1000 || status1 == 1001) {
+                                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(getActivity(), json.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable throwable, boolean b) {
+                            if (mWaitDialog.isShowing()) {
+                                Utils.dismissWaitDialog(mWaitDialog);
+                            }
+                            Toast.makeText(getActivity(), "网络不通", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onCancelled(CancelledException e) {
+
+                        }
+
+                        @Override
+                        public void onFinished() {
+
+                        }
+                    });
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

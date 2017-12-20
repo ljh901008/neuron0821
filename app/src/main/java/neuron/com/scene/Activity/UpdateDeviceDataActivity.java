@@ -2,8 +2,6 @@ package neuron.com.scene.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -17,6 +15,7 @@ import android.widget.TextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -45,50 +44,7 @@ public class UpdateDeviceDataActivity extends BaseActivity implements View.OnCli
     private String neuronId,deviceType;
     private String updateMethod = "UpdateDevices";
     private Intent intent;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://修改房间名 和设备名称
-                    if (msg.what == 102) {
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "修改设备名称和房间", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(UpdateDeviceDataActivity.this, jsonObject.getString("error"));
-                            } else {
-                              //  Utils.showDialog(UpdateDeviceDataActivity.this, "修改成功");
-                                final AlertDialog builder = new AlertDialog.Builder(UpdateDeviceDataActivity.this).create();
-                                View view = View.inflate(UpdateDeviceDataActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("修改成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        intent.putExtra("tag", 1);
-                                        setResult(RESULT_OK);
-                                        builder.dismiss();
-                                        finish();
-                                    }
-                                });
-                                builder.show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
 
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -204,14 +160,60 @@ public class UpdateDeviceDataActivity extends BaseActivity implements View.OnCli
             jsonObject.put("device_name", deviceName);
             jsonObject.put("room_id", roomId);
             String sign = MD5Utils.MD5Encode(aesAccount + jsonObject.toString() + engineId + updateMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device", jsonObject.toString());
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", updateMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String updateResult) {
+                    Log.e(TAG + "修改设备名称和房间", updateResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(updateResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(UpdateDeviceDataActivity.this, jsonObject.getString("error"));
+                        } else {
+                            //  Utils.showDialog(UpdateDeviceDataActivity.this, "修改成功");
+                            final AlertDialog builder = new AlertDialog.Builder(UpdateDeviceDataActivity.this).create();
+                            View view = View.inflate(UpdateDeviceDataActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("修改成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    intent.putExtra("tag", 1);
+                                    setResult(RESULT_OK);
+                                    builder.dismiss();
+                                    finish();
+                                }
+                            });
+                            builder.show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

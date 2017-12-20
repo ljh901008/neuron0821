@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +12,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -42,103 +41,7 @@ public class DoorSecsorActivity extends BaseActivity implements View.OnClickList
     private String deviceName,roomName,roomId, deviceStatus,deviceId,deviceType;
     private Intent intent;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://设备详情
-                    if (msg.what == 102) {
-                        String Result = (String) msg.obj;
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Log.e(TAG + "门磁详情", Result);
-                        try {
-                            JSONObject jsonObject = new JSONObject(Result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
-                                deviceName = jsonBasic.getString("controlled_device_name");
-                                roomName = jsonBasic.getString("room_name");
-                                deviceName_tv.setText(deviceName);
-                                roomName_tv.setText(roomName);
-                                // cBrand = jsonBasic.getString("controlled_device_brand");
-                                //cSerial = jsonBasic.getString("controlled_device_serial");
-                                roomId = jsonBasic.getString("room_id");
-                                deviceId = jsonBasic.getString("controlled_device_id");
-                                deviceType = jsonBasic.getString("electric_type_id");
-                                deviceStatus = jsonBasic.getString("status");
-                                if ("00".equals(deviceStatus)) {
-                                    close_iv.setImageResource(R.mipmap.tv_close);
-                                    close_tv.setTextColor(getResources().getColor(R.color.white));
-                                    close_tv.setText("关闭");
-                                } else {
-                                    close_iv.setImageResource(R.mipmap.tv_open);
-                                    close_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                    close_tv.setText("开启");
-                                }
 
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 2://开启门磁
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "门磁操作", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(DoorSecsorActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(DoorSecsorActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                close_iv.setImageResource(R.mipmap.tv_open);
-                                close_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                close_tv.setText("开启");
-                                deviceStatus = "01";
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(DoorSecsorActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 3://关闭门磁操作
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "门磁操作", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(DoorSecsorActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(DoorSecsorActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                close_iv.setImageResource(R.mipmap.tv_close);
-                                close_tv.setTextColor(getResources().getColor(R.color.white));
-                                close_tv.setText("关闭");
-                                deviceStatus = "00";
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(DoorSecsorActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -220,7 +123,7 @@ public class DoorSecsorActivity extends BaseActivity implements View.OnClickList
             Utils.showWaitDialog("加载中...",DoorSecsorActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceCode + engineId + orderMethod + methodType + orderId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device_id", deviceId);
@@ -230,7 +133,68 @@ public class DoorSecsorActivity extends BaseActivity implements View.OnClickList
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", orderMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1, this);
+           // xutilsHelper.sendPost(arg1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    switch(arg1){
+                        case 2:
+                            Utils.dismissWaitDialog(mWaitDialog);
+                            Log.e(TAG + "门磁操作", s);
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(DoorSecsorActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(DoorSecsorActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    close_iv.setImageResource(R.mipmap.tv_open);
+                                    close_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    close_tv.setText("开启");
+                                    deviceStatus = "01";
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 3:
+                            Utils.dismissWaitDialog(mWaitDialog);
+                            Log.e(TAG + "门磁操作", s);
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(DoorSecsorActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(DoorSecsorActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    close_iv.setImageResource(R.mipmap.tv_close);
+                                    close_tv.setTextColor(getResources().getColor(R.color.white));
+                                    close_tv.setText("关闭");
+                                    deviceStatus = "00";
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(DoorSecsorActivity.this, "网络不通", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -238,21 +202,72 @@ public class DoorSecsorActivity extends BaseActivity implements View.OnClickList
     /**
      * 获取窗帘的详情
      */
-    private void getStatus(String deviceId,String deviceType){
+    private void getStatus(String deviceid,String devicetype){
         Utils.showWaitDialog(getString(R.string.loadtext_load),DoorSecsorActivity.this,mWaitDialog);
         setAccount();
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            String sign = MD5Utils.MD5Encode(aesAccount + deviceid + devicetype + engineId + method + token + URLUtils.MD5_SIGN, "");
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
-            xutilsHelper.add("controlled_device_id", deviceId);
-            xutilsHelper.add("electric_type_id", deviceType);
+            xutilsHelper.add("controlled_device_id", deviceid);
+            xutilsHelper.add("electric_type_id", devicetype);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            //xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String Result) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "门磁详情", Result);
+                    try {
+                        JSONObject jsonObject = new JSONObject(Result);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
+                            deviceName = jsonBasic.getString("controlled_device_name");
+                            roomName = jsonBasic.getString("room_name");
+                            deviceName_tv.setText(deviceName);
+                            roomName_tv.setText(roomName);
+                            // cBrand = jsonBasic.getString("controlled_device_brand");
+                            //cSerial = jsonBasic.getString("controlled_device_serial");
+                            roomId = jsonBasic.getString("room_id");
+                            deviceId = jsonBasic.getString("controlled_device_id");
+                            deviceType = jsonBasic.getString("electric_type_id");
+                            deviceStatus = jsonBasic.getString("status");
+                            if ("00".equals(deviceStatus)) {
+                                close_iv.setImageResource(R.mipmap.tv_close);
+                                close_tv.setTextColor(getResources().getColor(R.color.white));
+                                close_tv.setText("关闭");
+                            } else {
+                                close_iv.setImageResource(R.mipmap.tv_open);
+                                close_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                close_tv.setText("开启");
+                            }
+
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

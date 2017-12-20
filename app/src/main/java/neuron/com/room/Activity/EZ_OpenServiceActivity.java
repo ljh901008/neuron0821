@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -13,10 +11,10 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.karics.library.zxing.android.CaptureActivity;
-import com.videogo.openapi.bean.EZAccessToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.Date;
 
@@ -62,113 +60,8 @@ public class EZ_OpenServiceActivity extends BaseActivity implements View.OnClick
     private String s = "1[3|4|5|7|8][0-9]{9}";
     private String phoneNumber;
     private String phoneMsg;
-    private EZAccessToken EZToken;
     private SharedPreferencesManager sharedPreferencesManager = SharedPreferencesManager.getInstance(this);
-    private Handler handler =new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://获取萤石服务器时间
-                    String EZTimeResult = (String) msg.obj;
-                    try {
-                        JSONObject json=new JSONObject(EZTimeResult);
-                        JSONObject result=json.getJSONObject("result");
-                        JSONObject data=result.getJSONObject("data");
-                        EzTime= data.getString("serverTime");
-                        if (sharedPreferencesManager != null) {
-                            sharedPreferencesManager.save("EZTime", EzTime);
-                        }
-                        //判断权限
-                        if (sharedPreferencesManager.get("userType").equals("01")) {
-                            if (phoneNumber.equals(sharedPreferencesManager.get("account"))) {
-                                getMessage(phoneNumber);//拿到时间获取短信
-                            } else {
-                                Utils.showDialog(EZ_OpenServiceActivity.this,"请输入用户名手机号");
-                            }
-                        } else {
-                            Utils.showDialog(EZ_OpenServiceActivity.this,"子帐号、分享帐号，请输入主账号开通萤石云服务的手机号");
-                        }
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    break;
-                case 2://获取萤石服务器短信
-                    String EZMsgResult = (String) msg.obj;
-                    try {
-                        JSONObject json=new JSONObject(EZMsgResult);
-                        JSONObject j = json.getJSONObject("result");
-                        int code = j.getInt("code");
-                        String message = j.getString("msg");
-                        if (code == 200) {
-                            Toast.makeText(EZ_OpenServiceActivity.this, message, Toast.LENGTH_SHORT).show();
-                        }else {
-                            Toast.makeText(EZ_OpenServiceActivity.this, message, Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    break;
-                case 3://开通萤石云服务
-                    String EZServiceResult = (String) msg.obj;
-                    try {
-                        JSONObject jsonService = new JSONObject(EZServiceResult);
-                        JSONObject jsonObject = jsonService.getJSONObject("result");
-                        String message = jsonObject.getString("msg");
-                        int code = jsonObject.getInt("code");
-                        if (code == 200) {//开通成功
-                            Date date = new Date();
-                            long t = date.getTime() / 1000;//获取当前时间  。以秒为单位
-                            long l = Integer.parseInt(EzTime);
-                            long differ = t - l;
-                            if (differ >= 300) {//判断是否超过5分钟
-                                getTime();
-                            }
-                            getAccessToken(phoneNumber);
-                        } else if (code == 10012) {//说明此手机号已经开通萤石云服务，直接获取accesstoken
-                            Log.e("测试2", "萤石服务已开通，获取token");
-                            getAccessToken(phoneNumber);
-                        } else {
-                            Toast.makeText(EZ_OpenServiceActivity.this, message, Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    break;
-                case 4://第三方获取token
-                    String EZResult = (String) msg.obj;
-                    try {
-                        JSONObject json = new JSONObject(EZResult);
-                        JSONObject js1 = json.getJSONObject("result");
-                        int code = js1.getInt("code");
-                        if (code == 200) {
-                            JSONObject js = js1.getJSONObject("data");
-                            String accessTonken = js.getString("accessToken");
-                            sharedPreferencesManager.save("EZToken", accessTonken);
-                            Log.e("Openservicetoken", accessTonken);
-                            Utils.detectionEZToken(EZ_OpenServiceActivity.this);
-                            //开通服务成功 进入扫描界面
-                            Intent intent = new Intent(EZ_OpenServiceActivity.this, CaptureActivity.class);
-                            intent.putExtra("type", 2);
-                            startActivity(intent);
-                            if (sharedPreferencesManager != null) {
-                                sharedPreferencesManager = null;
-                            }
-                        }
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -235,10 +128,53 @@ public class EZ_OpenServiceActivity extends BaseActivity implements View.OnClick
      * 获取萤石服务器时间
      */
     public void getTime(){
-        XutilsHelper xutil = new XutilsHelper(URLUtils.EZTIME_URL, handler);
+        XutilsHelper xutil = new XutilsHelper(URLUtils.EZTIME_URL);
         xutil.add("id", "12345646");
         xutil.add("appKey", OgeApplication.AppKey);
-        xutil.sendPost(1, this);
+        //xutil.sendPost(1, this);
+        xutil.sendPost2(new Callback.CommonCallback<String>() {
+            @Override
+            public void onSuccess(String EZTimeResult) {
+                //获取萤石服务器时间
+                try {
+                    JSONObject json=new JSONObject(EZTimeResult);
+                    JSONObject result=json.getJSONObject("result");
+                    JSONObject data=result.getJSONObject("data");
+                    EzTime= data.getString("serverTime");
+                    if (sharedPreferencesManager != null) {
+                        sharedPreferencesManager.save("EZTime", EzTime);
+                    }
+                    //判断权限
+                    if (sharedPreferencesManager.get("userType").equals("01")) {
+                        if (phoneNumber.equals(sharedPreferencesManager.get("account"))) {
+                            getMessage(phoneNumber);//拿到时间获取短信
+                        } else {
+                            Utils.showDialog(EZ_OpenServiceActivity.this,"请输入用户名手机号");
+                        }
+                    } else {
+                        Utils.showDialog(EZ_OpenServiceActivity.this,"子帐号、分享帐号，请输入主账号开通萤石云服务的手机号");
+                    }
+                } catch (JSONException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable, boolean b) {
+
+            }
+
+            @Override
+            public void onCancelled(CancelledException e) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
     }
     /**
      * 获取开通萤石云服务的短信
@@ -261,9 +197,44 @@ public class EZ_OpenServiceActivity extends BaseActivity implements View.OnClick
             json.put("method", method_getMsg);
             json.put("params", json2);
             Log.e("OpenEzService:json:", json.toString());
-            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL, handler);
+            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL);
             xutil.addRequestParams(json);
-            xutil.sendPost(2, this);
+            //xutil.sendPost(2, this);
+            xutil.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String EZMsgResult) {
+                    //获取萤石服务器短信
+                    try {
+                        JSONObject json=new JSONObject(EZMsgResult);
+                        JSONObject j = json.getJSONObject("result");
+                        int code = j.getInt("code");
+                        String message = j.getString("msg");
+                        if (code == 200) {
+                            Toast.makeText(EZ_OpenServiceActivity.this, message, Toast.LENGTH_SHORT).show();
+                        }else {
+                            Toast.makeText(EZ_OpenServiceActivity.this, message, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (JSONException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -294,9 +265,54 @@ public class EZ_OpenServiceActivity extends BaseActivity implements View.OnClick
             json1.put("method", method_openService);
             json1.put("params", json2);
             Log.e("OpenEzService:json:", json1.toString());
-            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL, handler);
+            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL);
             xutil.addRequestParams(json1);
-            xutil.sendPost(3, this);
+            //xutil.sendPost(3, this);
+            xutil.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String EZServiceResult) {
+                    //开通萤石云服务
+                    try {
+                        JSONObject jsonService = new JSONObject(EZServiceResult);
+                        JSONObject jsonObject = jsonService.getJSONObject("result");
+                        String message = jsonObject.getString("msg");
+                        int code = jsonObject.getInt("code");
+                        if (code == 200) {//开通成功
+                            Date date = new Date();
+                            long t = date.getTime() / 1000;//获取当前时间  。以秒为单位
+                            long l = Integer.parseInt(EzTime);
+                            long differ = t - l;
+                            if (differ >= 300) {//判断是否超过5分钟
+                                getTime();
+                            }
+                            getAccessToken(phoneNumber);
+                        } else if (code == 10012) {//说明此手机号已经开通萤石云服务，直接获取accesstoken
+                            Log.e("测试2", "萤石服务已开通，获取token");
+                            getAccessToken(phoneNumber);
+                        } else {
+                            Toast.makeText(EZ_OpenServiceActivity.this, message, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (JSONException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -323,10 +339,52 @@ public class EZ_OpenServiceActivity extends BaseActivity implements View.OnClick
             json.put("system", json1);
             json.put("method", method_getAccessToken);
             json.put("params", json2);
-            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL, handler);
+            XutilsHelper xutil = new XutilsHelper(URLUtils.EZ_URL);
             xutil.addRequestParams(json);
-            xutil.sendPost(4, this);
+            //xutil.sendPost(4, this);
+            xutil.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String EZResult) {
+                    //第三方获取token
+                    try {
+                        JSONObject json = new JSONObject(EZResult);
+                        JSONObject js1 = json.getJSONObject("result");
+                        int code = js1.getInt("code");
+                        if (code == 200) {
+                            JSONObject js = js1.getJSONObject("data");
+                            String accessTonken = js.getString("accessToken");
+                            sharedPreferencesManager.save("EZToken", accessTonken);
+                            Log.e("Openservicetoken", accessTonken);
+                            Utils.detectionEZToken(EZ_OpenServiceActivity.this);
+                            //开通服务成功 进入扫描界面
+                            Intent intent = new Intent(EZ_OpenServiceActivity.this, CaptureActivity.class);
+                            intent.putExtra("type", 2);
+                            startActivity(intent);
+                            if (sharedPreferencesManager != null) {
+                                sharedPreferencesManager = null;
+                            }
+                        }
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
 
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (JSONException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

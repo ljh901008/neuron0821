@@ -96,7 +96,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@+id/scenetimingselect_customname_tv"
-            android:text="2017-00-00"
+            android:text="2000-00-00"
             android:textColor="@color/text_black"
             android:textSize="@dimen/text_size_16"
             android:layout_centerVertical="true"

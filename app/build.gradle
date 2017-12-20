@@ -6,7 +6,7 @@ android {
     buildToolsVersion '25.0.0'
 
     defaultConfig {
-        applicationId "neuron.com.comneuron"
+        applicationId "com.neuron.puls"
         minSdkVersion 14
         targetSdkVersion 22
         versionCode 1
@@ -20,7 +20,7 @@ android {
         //极光推送
         manifestPlaceholders = [
                 JPUSH_PKGNAME : applicationId,
-                JPUSH_APPKEY : "4b889b82a72157186ae4817e", //JPush上注册的包名对应的appkey.
+                JPUSH_APPKEY : "d4a21a023b4b4ba9526642ff", //JPush上注册的包名对应的appkey.
                 JPUSH_CHANNEL : "developer-default", //暂时填写默认值即可.
         ]
     }

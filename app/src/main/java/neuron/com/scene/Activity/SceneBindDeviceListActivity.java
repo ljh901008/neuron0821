@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -21,6 +19,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,35 +51,7 @@ public class SceneBindDeviceListActivity extends BaseActivity implements View.On
     private String sceneId,account,token,engineId;
     private String delBindDevice = "DelControlledDevice";
     private TextView warning_tv,title;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://删除绑定设备
-                    if (msg.what == 102) {
-                        try {
-                            String deleteResult = (String) msg.obj;
-                            Log.e(TAG + "删除场景所绑定的设备", deleteResult);
-                            JSONObject json = new JSONObject(deleteResult);
-                            if (json.getInt("status") == 9999) {
-                                Utils.showDialog(SceneBindDeviceListActivity.this,"删除成功");
-                                adapter.notifyDataSetChanged();
-                            } else {
-                                Utils.showDialog(SceneBindDeviceListActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                break;
-                default:
-                break;
-            }
 
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -213,7 +184,7 @@ public class SceneBindDeviceListActivity extends BaseActivity implements View.On
             jsonObject.put("method", list.get(position).getDeviceStatus());
             jsonArray.put(jsonObject);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + jsonArray.toString() + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("contextual_model_id", sceneId);
@@ -221,7 +192,38 @@ public class SceneBindDeviceListActivity extends BaseActivity implements View.On
             xutils.add("token", token);
             xutils.add("method", method);
             xutils.add("sign", sign);
-            xutils.sendPost(1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    try {
+                        Log.e(TAG + "删除场景所绑定的设备", deleteResult);
+                        JSONObject json = new JSONObject(deleteResult);
+                        if (json.getInt("status") == 9999) {
+                            Utils.showDialog(SceneBindDeviceListActivity.this,"删除成功");
+                            adapter.notifyDataSetChanged();
+                        } else {
+                            Utils.showDialog(SceneBindDeviceListActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

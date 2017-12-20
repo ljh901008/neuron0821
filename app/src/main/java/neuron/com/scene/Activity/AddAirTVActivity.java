@@ -3,8 +3,6 @@ package neuron.com.scene.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -23,6 +21,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -54,56 +53,7 @@ public class AddAirTVActivity extends BaseActivity implements View.OnClickListen
     private String brandName,brandId,serialName, serialId;
     private String method = "AddInfradedEquipment";
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://添加电视空调
-                    if (msg.what == 102) {
-                        String setTimeResult = (String) msg.obj;
-                        Log.e(TAG + "添加电视和空调", setTimeResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(setTimeResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(AddAirTVActivity.this, jsonObject.getString("error"));
-                            } else {
-                                final AlertDialog builder = new AlertDialog.Builder(AddAirTVActivity.this).create();
-                                View view = View.inflate(AddAirTVActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("添加成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        /*Intent intent = new Intent(AddAirTVActivity.this, InfraredTransponderActivity.class);
-                                        intent.putExtra("neuronId", neuronId);
-                                        intent.putExtra("deviceType", deviceType);
-                                        startActivity(intent);*/
-                                        intent.putExtra("type", 1);
-                                        setResult(RESULT_OK,intent);
-                                        finish();
-                                        builder.dismiss();
-                                    }
-                                });
-                                builder.show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(AddAirTVActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -268,7 +218,7 @@ public class AddAirTVActivity extends BaseActivity implements View.OnClickListen
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + brandId + neuronName + serialId + electricId + engineId + method + neuronId + roomId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -280,7 +230,55 @@ public class AddAirTVActivity extends BaseActivity implements View.OnClickListen
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String setTimeResult) {
+                    Log.e(TAG + "添加电视和空调", setTimeResult);
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        JSONObject jsonObject = new JSONObject(setTimeResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(AddAirTVActivity.this, jsonObject.getString("error"));
+                        } else {
+                            final AlertDialog builder = new AlertDialog.Builder(AddAirTVActivity.this).create();
+                            View view = View.inflate(AddAirTVActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("添加成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+
+                                    intent.putExtra("type", 1);
+                                    setResult(RESULT_OK,intent);
+                                    finish();
+                                    builder.dismiss();
+                                }
+                            });
+                            builder.show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(AddAirTVActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

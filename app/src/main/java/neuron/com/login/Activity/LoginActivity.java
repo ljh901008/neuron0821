@@ -73,7 +73,10 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     private Button login_btn;
     //忘记帐号和忘记密码
     private TextView register_tv,forgetPassword_tv;
-    //匹配手机正则表达式
+    /**
+     * The S.
+     */
+//匹配手机正则表达式
     String s = "^(13[0-9]|15[0|3|6|7|8|9]|18[8|9])\\d{8}$";
     //用户名和密码
     private String userName,userPwd;
@@ -104,7 +107,6 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     //从手势密码页面进来的标记 0忘记手势密码  1其他方式登录
     private int type;
     private Intent intent;
-    private Handler handler = new Handler();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,7 +115,6 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         init();
         setOnclick();
     }
-
     private void init(){
         spm = SharedPreferencesManager.getInstance(LoginActivity.this);
         account_ed = (EditText) findViewById(R.id.login_name_ed);
@@ -185,7 +186,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                             aesUserName = AESOperator.encrypt(userName, URLUtils.AES_SIGN);
                             String jiami = aesUserName + CHECKACCOUNT_METHOD + URLUtils.MD5_SIGN;
                             String sign = MD5Utils.MD5Encode(jiami, "");
-                            XutilsHelper xutils = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+                            XutilsHelper xutils = new XutilsHelper(URLUtils.USERNAME_URL);
                             xutils.add("account", aesUserName);
                             xutils.add("method", CHECKACCOUNT_METHOD);
                             xutils.add("sign", sign);
@@ -199,7 +200,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                                                 String aesPwd = AESOperator.encrypt(MD5Utils.MD5Encode(userPwd + URLUtils.MD5_SIGN, ""), URLUtils.AES_SIGN);
                                                 String signString = aesUserName + aesPwd + MacAddress + LOGIN_METHOD + URLUtils.MD5_SIGN;
                                                 String sign = MD5Utils.MD5Encode(signString, "");
-                                                XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+                                                XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL);
                                                 xutil.add("account", aesUserName);
                                                 xutil.add("password", aesPwd);
                                                 xutil.add("device_identifier", MacAddress);
@@ -208,10 +209,10 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                                                 xutil.sendPost2(new CommonCallback<String>() {
                                                     @Override
                                                     public void onSuccess(String s) {
+                                                        Utils.dismissWaitDialog(mWaitDialog);
                                                         try {
                                                             JSONObject loginJson = new JSONObject(s);
                                                             if (loginJson.getInt("status") == 9999){
-                                                                Utils.dismissWaitDialog(mWaitDialog);
                                                                 intent = getIntent();
                                                                 type = intent.getIntExtra("type", 3);
                                                                 if (type == 0) {//从手势密码页面点击忘记密码进入的，要清空手势密码
@@ -219,14 +220,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                                                                 }
                                                                 token = loginJson.getString("token");
                                                                 JSONObject jsonObject = loginJson.getJSONObject("msg");
-                                /*if (spm.has("account")) {
-                                    //如果重新登录帐号和已保存帐号不一样就删除萤石token
-                                    if (!jsonObject.getString("account").equals(spm.get("account"))) {
-                                        if (spm.has("EZToken")) {
-                                            spm.remove("EZToken");
-                                        }
-                                    }
-                                }*/
+
                                                                 spm.save("account",userName);
                                                                 spm.save("token",token);
                                                                 Log.e(TAG + "token", token);
@@ -301,7 +295,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
                                                     @Override
                                                     public void onError(Throwable throwable, boolean b) {
-
+                                                        Utils.dismissWaitDialog(mWaitDialog);
                                                     }
 
                                                     @Override
@@ -329,6 +323,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
 
                                 @Override
                                 public void onError(Throwable throwable, boolean b) {
+                                    Utils.dismissWaitDialog(mWaitDialog);
                                     if (throwable instanceof HttpException) { // 网络错误
                                         HttpException httpEx = (HttpException) throwable;
                                         int responseCode = httpEx.getCode();
@@ -371,8 +366,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                 Intent intent2 = new Intent(LoginActivity.this,RegisterActivity.class);
                 intent2.putExtra("type", 2);
                 startActivity(intent2);
-               /* Intent intent_1 = new Intent(this,EZ_CameraListActivity.class);
-                startActivity(intent_1);*/
+
                 break;
             default:
                 break;
@@ -396,6 +390,9 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         super.onStop();
     }
 
+    /**
+     * The Adapter.
+     */
     PopWindowAdapter adapter;
     private  void showPopupWindow() {
         if (popupWindow == null) {
@@ -460,6 +457,9 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         }
     }
 
+    /**
+     * The M handler.
+     */
     Handler mHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -474,9 +474,17 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         OgeApplication.quiteApplication();
     }
 
+    /**
+     * The type Pop window adapter.
+     */
     public class PopWindowAdapter extends BaseAdapter {
         private List<UserDaoBean> list;
 
+        /**
+         * Instantiates a new Pop window adapter.
+         *
+         * @param list the list
+         */
         public PopWindowAdapter(List<UserDaoBean> list) {
             this.list = list;
         }
@@ -526,8 +534,18 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
             });
             return view;
         }
+
+        /**
+         * The type View holder.
+         */
         class ViewHolder {
+            /**
+             * The Account.
+             */
             TextView account;
+            /**
+             * The Delete.
+             */
             ImageButton delete;
         }
     }

@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -24,6 +22,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,98 +59,7 @@ public class HostManagerActivity extends Activity implements AdapterView.OnItemC
     private SharedPreferencesManager sharedPreferencesManager = null;
     private TextView tishi;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://控制主机列表
-                    if (msg.what == 102) {
-                        String hostManagerListResult = (String) msg.obj;
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Log.e(TAG + "控制主机列表",hostManagerListResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(hostManagerListResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("engine_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<HostManagerItemBean>();
-                                    HostManagerItemBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        bean = new HostManagerItemBean();
-                                        JSONObject json = jsonArray.getJSONObject(i);
-                                        bean.setHostManagerName(json.getString("engine_name"));
-                                        String engineId = json.getString("engine_id");
-                                        bean.setEngineId(engineId);
-                                        bean.setHostSerialNumber(json.getString("serial_number"));
-                                        int d = json.getInt("_default");
-                                        if (d == 0) {
-                                            sharedPreferencesManager.save("engine_id", engineId);
-                                        }
-                                        bean.setHostState(d);
-                                        list.add(bean);
-                                    }
-                                    Log.e(TAG + "列表长度", String.valueOf(list.size()));
-                                    adapter = new HostManageAdapter(list, HostManagerActivity.this);
-                                    hostList_lv.setAdapter(adapter);
-                                } else {
-                                    tishi.setVisibility(View.VISIBLE);
-                                }
-                            } else {
-                                Utils.dismissWaitDialog(mWaitDialog);
-                                Log.e(TAG + "error", jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://切换控制主机
-                    if (msg.what == 102) {
-                        String changeResult = (String) msg.obj;
-                        Log.e(TAG + "切换",changeResult);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(changeResult);
-                            if (jsonDelete.getInt("status") == 9999) {
-                                Toast.makeText(HostManagerActivity.this, "切换成功",Toast.LENGTH_LONG).show();
-                                //切换成功把本地保存的控制主机id换掉
-                                sharedPreferencesManager.save("engine_id",list.get(indexId).getEngineId());
-                            } else {
-                                Toast.makeText(HostManagerActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
 
-                    break;
-                case 3://删除控制主机
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "删除",deleteResult);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(deleteResult);
-                            if (jsonDelete.getInt("status") == 9999) {
-                                Toast.makeText(HostManagerActivity.this, "删除成功", Toast.LENGTH_LONG).show();
-                                adapter.setList(list);
-                                adapter.notifyDataSetChanged();
-                            } else if (jsonDelete.getInt("status") == 3002){
-                                Utils.showDialog(HostManagerActivity.this, "请先删除摄像头,再删除控制主机");
-                            } else {
-                                Toast.makeText(HostManagerActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -222,12 +130,68 @@ public class HostManagerActivity extends Activity implements AdapterView.OnItemC
                 Utils.showWaitDialog(getString(R.string.loadtext_load),HostManagerActivity.this,mWaitDialog);
                 String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
                 String sign = MD5Utils.MD5Encode(aesAccount + method + token + URLUtils.MD5_SIGN, "");
-                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
                 xutilsHelper.add("account", aesAccount);
                 xutilsHelper.add("token", token);
                 xutilsHelper.add("method", method);
                 xutilsHelper.add("sign", sign);
-                xutilsHelper.sendPost(1, this);
+                xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                    @Override
+                    public void onSuccess(String hostManagerListResult) {
+                        Utils.dismissWaitDialog(mWaitDialog);
+                        Log.e(TAG + "控制主机列表",hostManagerListResult);
+                        try {
+                            JSONObject jsonObject = new JSONObject(hostManagerListResult);
+                            if (jsonObject.getInt("status") == 9999) {
+                                JSONArray jsonArray = jsonObject.getJSONArray("engine_list");
+                                int length = jsonArray.length();
+                                if (length > 0) {
+                                    list = new ArrayList<HostManagerItemBean>();
+                                    HostManagerItemBean bean;
+                                    for (int i = 0; i < length; i++) {
+                                        bean = new HostManagerItemBean();
+                                        JSONObject json = jsonArray.getJSONObject(i);
+                                        bean.setHostManagerName(json.getString("engine_name"));
+                                        String engineId = json.getString("engine_id");
+                                        bean.setEngineId(engineId);
+                                        bean.setHostSerialNumber(json.getString("serial_number"));
+                                        int d = json.getInt("_default");
+                                        if (d == 0) {
+                                            sharedPreferencesManager.save("engine_id", engineId);
+                                        }
+                                        bean.setHostState(d);
+                                        list.add(bean);
+                                    }
+                                    Log.e(TAG + "列表长度", String.valueOf(list.size()));
+                                    adapter = new HostManageAdapter(list, HostManagerActivity.this);
+                                    hostList_lv.setAdapter(adapter);
+                                } else {
+                                    tishi.setVisibility(View.VISIBLE);
+                                }
+                            } else {
+                                Utils.dismissWaitDialog(mWaitDialog);
+                                Log.e(TAG + "error", jsonObject.getString("error"));
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable, boolean b) {
+                        Utils.dismissWaitDialog(mWaitDialog);
+                    }
+
+                    @Override
+                    public void onCancelled(CancelledException e) {
+
+                    }
+
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -249,13 +213,45 @@ public class HostManagerActivity extends Activity implements AdapterView.OnItemC
                 String engineId = list.get(index).getEngineId();
                 Log.e(TAG + "切换主机Id", engineId);
                 String sign = MD5Utils.MD5Encode(aesAccount + engineId + changeHostMethod + token + URLUtils.MD5_SIGN, "");
-                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
                 xutilsHelper.add("account", aesAccount);
                 xutilsHelper.add("engine_id", engineId);
                 xutilsHelper.add("token", token);
                 xutilsHelper.add("method", changeHostMethod);
                 xutilsHelper.add("sign", sign);
-                xutilsHelper.sendPost(2, this);
+                xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                    @Override
+                    public void onSuccess(String changeResult) {
+                        Log.e(TAG + "切换",changeResult);
+                        try {
+                            JSONObject jsonDelete = new JSONObject(changeResult);
+                            if (jsonDelete.getInt("status") == 9999) {
+                                Toast.makeText(HostManagerActivity.this, "切换成功",Toast.LENGTH_LONG).show();
+                                //切换成功把本地保存的控制主机id换掉
+                                sharedPreferencesManager.save("engine_id",list.get(indexId).getEngineId());
+                            } else {
+                                Toast.makeText(HostManagerActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable, boolean b) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(CancelledException e) {
+
+                    }
+
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -283,14 +279,48 @@ public class HostManagerActivity extends Activity implements AdapterView.OnItemC
                 jsonArray.put(jsonObject);
                 Log.e(TAG + "主机", jsonArray.toString());
                 String sign = MD5Utils.MD5Encode(aesAccount + jsonArray.toString() + deleteHostMethod + token + URLUtils.MD5_SIGN, "");
-                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
                 xutilsHelper.add("account", aesAccount);
                 xutilsHelper.add("engine_id","");
                 xutilsHelper.add("device_list", jsonArray.toString());
                 xutilsHelper.add("token", token);
                 xutilsHelper.add("method", deleteHostMethod);
                 xutilsHelper.add("sign", sign);
-                xutilsHelper.sendPost(3, this);
+                xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                    @Override
+                    public void onSuccess(String deleteResult) {
+                        Log.e(TAG + "删除",deleteResult);
+                        try {
+                            JSONObject jsonDelete = new JSONObject(deleteResult);
+                            if (jsonDelete.getInt("status") == 9999) {
+                                Toast.makeText(HostManagerActivity.this, "删除成功", Toast.LENGTH_LONG).show();
+                                adapter.setList(list);
+                                adapter.notifyDataSetChanged();
+                            } else if (jsonDelete.getInt("status") == 3002){
+                                Utils.showDialog(HostManagerActivity.this, "请先删除摄像头,再删除控制主机");
+                            } else {
+                                Toast.makeText(HostManagerActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable, boolean b) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(CancelledException e) {
+
+                    }
+
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }

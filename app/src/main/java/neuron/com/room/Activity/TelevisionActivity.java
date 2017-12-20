@@ -3,8 +3,6 @@ package neuron.com.room.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +14,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -52,116 +51,7 @@ public class TelevisionActivity extends BaseActivity implements View.OnClickList
     private boolean isStudy = false;//是否在学习模式的标记
     private Button help_btn;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String tvResult = (String) msg.obj;
-                        Log.e(TAG + "电视详情", tvResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(tvResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                if (jsonMsg.getInt("is_learning") == 0) {//可以学习
-                                    study_btn.setVisibility(View.VISIBLE);
-                                    help_btn.setVisibility(View.VISIBLE);
-                                } else {
-                                    study_btn.setVisibility(View.GONE);
-                                    help_btn.setVisibility(View.GONE);
-                                }
-                                JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
-                                tvName = jsonBasic.getString("controlled_device_name");
-                                tvRoom = jsonBasic.getString("room_name");
-                                tvName_tv.setText(tvName);
-                                tvRoom_tv.setText(tvRoom);
-                                tvBrand = jsonBasic.getString("controlled_device_brand");
-                                tvSerial = jsonBasic.getString("controlled_device_serial");
-                                roomId = jsonBasic.getString("room_id");
-                                deviceId = jsonBasic.getString("controlled_device_id");
-                                deviceType = jsonBasic.getString("electric_type_id");
 
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 2://学习状态下操作
-                    if (msg.what == 102) {
-                        String studyResult = (String) msg.obj;
-                        Log.e(TAG + "电视学习", studyResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(studyResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(TelevisionActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(TelevisionActivity.this, "学习成功", Toast.LENGTH_SHORT).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 3://正常操作
-                    if (msg.what == 102) {
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "电视操作", updateResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(TelevisionActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
-                            } else {
-                                //Utils.showDialog(TelevisionActivity.this, "操作成功");
-                                Toast.makeText(TelevisionActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 4://是否进入学习状态
-                    if (msg.what == 102) {
-                        String studyResult = (String) msg.obj;
-                        Log.e(TAG + "电视操作", studyResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(studyResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(TelevisionActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
-                            } else {
-                                if (isStudy) {
-                                    Toast.makeText(TelevisionActivity.this, "已进入学习状态", Toast.LENGTH_SHORT).show();
-                                    study_btn.setText("完成学习");
-                                } else {
-                                    Toast.makeText(TelevisionActivity.this, "已退出学习状态", Toast.LENGTH_LONG).show();
-                                    study_btn.setText("进入学习");
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -335,7 +225,7 @@ public class TelevisionActivity extends BaseActivity implements View.OnClickList
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             Log.e(TAG + "电视学习数据流", aesAccount +","+ deviceId +"," + deviceType +"," + engineId +"," + methodId +"," + token);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + methodId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("controlled_device_id", deviceId);
@@ -343,7 +233,44 @@ public class TelevisionActivity extends BaseActivity implements View.OnClickList
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodId);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(4, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String studyResult) {
+                    Log.e(TAG + "电视操作", studyResult);
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        JSONObject jsonObject = new JSONObject(studyResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Toast.makeText(TelevisionActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
+                        } else {
+                            if (isStudy) {
+                                Toast.makeText(TelevisionActivity.this, "已进入学习状态", Toast.LENGTH_SHORT).show();
+                                study_btn.setText("完成学习");
+                            } else {
+                                Toast.makeText(TelevisionActivity.this, "已退出学习状态", Toast.LENGTH_LONG).show();
+                                study_btn.setText("进入学习");
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -374,7 +301,7 @@ public class TelevisionActivity extends BaseActivity implements View.OnClickList
             Utils.showWaitDialog(getString(R.string.loadtext_load),TelevisionActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + engineId + tvKeyId + methodName + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("controlled_device_id", deviceId);
@@ -382,7 +309,57 @@ public class TelevisionActivity extends BaseActivity implements View.OnClickList
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodName);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    Log.e(TAG + "电视学习", s);
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    switch(arg1){
+                        case 2://学习状态下操作
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(TelevisionActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(TelevisionActivity.this, "学习成功", Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 3://正常操作
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(TelevisionActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    //Utils.showDialog(TelevisionActivity.this, "操作成功");
+                                    Toast.makeText(TelevisionActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                        break;
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -390,7 +367,7 @@ public class TelevisionActivity extends BaseActivity implements View.OnClickList
     /**
      * 获取电视的详情
      */
-    private void getStatus(String deviceId,String deviceType){
+    private void getStatus(String deviceid,String devicetype){
         Utils.showWaitDialog(getString(R.string.loadtext_load),TelevisionActivity.this,mWaitDialog);
         if (sharedPreferencesManager == null) {
             sharedPreferencesManager = SharedPreferencesManager.getInstance(this);
@@ -406,17 +383,65 @@ public class TelevisionActivity extends BaseActivity implements View.OnClickList
         }
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            Log.e(TAG + "电视详情数据流", aesAccount +","+ deviceId +"," + deviceType +"," + engineId +"," + method +"," + token);
-            String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            Log.e(TAG + "电视详情数据流", aesAccount +","+ deviceid +"," + devicetype +"," + engineId +"," + method +"," + token);
+            String sign = MD5Utils.MD5Encode(aesAccount + deviceid + devicetype + engineId + method + token + URLUtils.MD5_SIGN, "");
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
-            xutilsHelper.add("controlled_device_id", deviceId);
-            xutilsHelper.add("electric_type_id", deviceType);
+            xutilsHelper.add("controlled_device_id", deviceid);
+            xutilsHelper.add("electric_type_id", devicetype);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            //xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String tvResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "电视详情", tvResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(tvResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            if (jsonMsg.getInt("is_learning") == 0) {//可以学习
+                                study_btn.setVisibility(View.VISIBLE);
+                                help_btn.setVisibility(View.VISIBLE);
+                            } else {
+                                study_btn.setVisibility(View.GONE);
+                                help_btn.setVisibility(View.GONE);
+                            }
+                            JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
+                            tvName = jsonBasic.getString("controlled_device_name");
+                            tvRoom = jsonBasic.getString("room_name");
+                            tvName_tv.setText(tvName);
+                            tvRoom_tv.setText(tvRoom);
+                            tvBrand = jsonBasic.getString("controlled_device_brand");
+                            tvSerial = jsonBasic.getString("controlled_device_serial");
+                            roomId = jsonBasic.getString("room_id");
+                            deviceId = jsonBasic.getString("controlled_device_id");
+                            deviceType = jsonBasic.getString("electric_type_id");
+
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

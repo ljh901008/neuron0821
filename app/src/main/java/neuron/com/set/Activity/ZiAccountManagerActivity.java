@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -24,6 +22,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,70 +54,7 @@ public class ZiAccountManagerActivity extends BaseActivity implements View.OnCli
     private String ziMethod = "GetKidAccountList";
     private String delZiMethod = "DelKidAccount";
     private TextView tishi;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://子账号列表
-                    if (msg.what == 102) {
-                        String ziResult = (String) msg.obj;
-                        try {
-                            JSONObject jsonObject = new JSONObject(ziResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("kid_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    listBean = new ArrayList<AccountDataBean>();
-                                    AccountDataBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        bean = new AccountDataBean();
-                                        JSONObject jsonBean = jsonArray.getJSONObject(i);
-                                        bean.setAccoungNumber(jsonBean.getString("account"));
-                                        Log.e("zi账号", jsonBean.getString("account"));
-                                        bean.setUserName(jsonBean.getString("username"));
-                                        JSONObject pathJson = jsonBean.getJSONObject("photo_path");
-                                        bean.setPhotoPath(pathJson.getString("Android"));
-                                        Log.e(TAG + "头像路径", pathJson.getString("Android"));
-                                        bean.setEdit(true);
-                                        bean.setSelect(false);
-                                        bean.setShow(true);
-                                        listBean.add(bean);
-                                    }
-                                    adapter = new ChildAccountManagerAdapter(listBean, ZiAccountManagerActivity.this);
-                                    listView.setAdapter(adapter);
-                                    tishi.setVisibility(View.GONE);
-                                } else {
-                                    tishi.setVisibility(View.VISIBLE);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://删除
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "删除", deleteResult);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(deleteResult);
-                            if (jsonDelete.getInt("status") == 9999) {
-                                Toast.makeText(ZiAccountManagerActivity.this, "删除成功",Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(ZiAccountManagerActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -239,12 +175,63 @@ public class ZiAccountManagerActivity extends BaseActivity implements View.OnCli
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + ziMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", ziMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String ziResult) {
+                    try {
+                        JSONObject jsonObject = new JSONObject(ziResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("kid_list");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                listBean = new ArrayList<AccountDataBean>();
+                                AccountDataBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    bean = new AccountDataBean();
+                                    JSONObject jsonBean = jsonArray.getJSONObject(i);
+                                    bean.setAccoungNumber(jsonBean.getString("account"));
+                                    Log.e("zi账号", jsonBean.getString("account"));
+                                    bean.setUserName(jsonBean.getString("username"));
+                                    JSONObject pathJson = jsonBean.getJSONObject("photo_path");
+                                    bean.setPhotoPath(pathJson.getString("Android"));
+                                    Log.e(TAG + "头像路径", pathJson.getString("Android"));
+                                    bean.setEdit(true);
+                                    bean.setSelect(false);
+                                    bean.setShow(true);
+                                    listBean.add(bean);
+                                }
+                                adapter = new ChildAccountManagerAdapter(listBean, ZiAccountManagerActivity.this);
+                                listView.setAdapter(adapter);
+                                tishi.setVisibility(View.GONE);
+                            } else {
+                                tishi.setVisibility(View.VISIBLE);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -254,13 +241,43 @@ public class ZiAccountManagerActivity extends BaseActivity implements View.OnCli
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + ziAccount + delZiMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("accountc", ziAccount);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", delZiMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Log.e(TAG + "删除", deleteResult);
+                    try {
+                        JSONObject jsonDelete = new JSONObject(deleteResult);
+                        if (jsonDelete.getInt("status") == 9999) {
+                            Toast.makeText(ZiAccountManagerActivity.this, "删除成功",Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(ZiAccountManagerActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

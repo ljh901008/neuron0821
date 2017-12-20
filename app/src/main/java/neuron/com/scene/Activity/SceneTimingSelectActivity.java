@@ -226,7 +226,8 @@ public class SceneTimingSelectActivity extends BaseActivity implements View.OnCl
         years = calendar.get(Calendar.YEAR);
         month = calendar.get(Calendar.MONTH);
         day = calendar.get(Calendar.DAY_OF_MONTH);
-        new DatePickerDialog(this, this, years, month, day).show();
+        new DatePickerDialog(SceneTimingSelectActivity.this, this, years, month, day).show();
+
     }
 
     @Override
@@ -238,8 +239,10 @@ public class SceneTimingSelectActivity extends BaseActivity implements View.OnCl
             custom_tv.setText(years + "-" + "0" + month + "-" + "0" + day);
         } else if (month > 10 && day < 10) {
             custom_tv.setText(years + "-" + month + "-" + "0" + day);
-        }else if (month < 10 && day > 10) {
+        } else if (month < 10 && day > 10) {
             custom_tv.setText(years + "-" + "0" + month + "-" + day);
+        } else {
+            custom_tv.setText(years + "-" + month + "-" + day);
         }
     }
 }

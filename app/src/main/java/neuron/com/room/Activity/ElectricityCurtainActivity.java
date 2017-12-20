@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +12,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -53,145 +52,7 @@ public class ElectricityCurtainActivity extends BaseActivity implements View.OnC
     private boolean isClose = false;
     private boolean isSuspend = false;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        String tvResult = (String) msg.obj;
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Log.e(TAG + "窗帘详情", tvResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(tvResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
-                                cName = jsonBasic.getString("controlled_device_name");
-                                cRoom = jsonBasic.getString("room_name");
-                                curtainName_tv.setText(cName);
-                                roomName_tv.setText(cRoom);
-                                roomId = jsonBasic.getString("room_id");
-                                deviceId = jsonBasic.getString("controlled_device_id");
-                                deviceType = jsonBasic.getString("electric_type_id");
-                                cStatus = jsonBasic.getString("status");
-                                if ("00".equals(cStatus)) {//关闭
-                                    isClose = true;
-                                    keyInit();
-                                    close_ibtn.setImageResource(R.mipmap.window_close_button);
-                                    cImageview.setImageResource(R.mipmap.window_close);
-                                    close_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                    curtainStatus_tv.setText("状态:关闭");
-                                } else if ("02".equals(cStatus)) {//暂停
-                                    isSuspend = true;
-                                    keyInit();
-                                    curtainstatus_ibtn.setImageResource(R.mipmap.window_suspend_button);
-                                    cImageview.setImageResource(R.mipmap.window_suspend);
-                                    suspend_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                    curtainStatus_tv.setText("状态:暂停");
-                                } else if ("01".equals(cStatus)) {//开启
-                                    isOpen = true;
-                                    keyInit();
-                                    powersource_ibtn.setImageResource(R.mipmap.window_open_button);
-                                    cImageview.setImageResource(R.mipmap.window_open);
-                                    open_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                    curtainStatus_tv.setText("状态:开启");
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Toast.makeText(ElectricityCurtainActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 2://开启
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String cResult = (String) msg.obj;
-                        Log.e(TAG + "窗帘操作", cResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(cResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(ElectricityCurtainActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(ElectricityCurtainActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
-                                cStatus = "01";
-                                keyInit();
-                                powersource_ibtn.setImageResource(R.mipmap.window_open_button);
-                                cImageview.setImageResource(R.mipmap.window_open);
-                                open_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                curtainStatus_tv.setText("状态:开启");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(ElectricityCurtainActivity.this, "网络超时", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case 3://暂停
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String cResult = (String) msg.obj;
-                        Log.e(TAG + "窗帘操作", cResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(cResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(ElectricityCurtainActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(ElectricityCurtainActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
-                                cStatus = "02";
-                                keyInit();
-                                curtainstatus_ibtn.setImageResource(R.mipmap.window_suspend_button);
-                                cImageview.setImageResource(R.mipmap.window_suspend);
-                                suspend_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                curtainStatus_tv.setText("状态:暂停");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(ElectricityCurtainActivity.this, "网络超时", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case 4://关闭
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String cResult = (String) msg.obj;
-                        Log.e(TAG + "窗帘操作", cResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(cResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(ElectricityCurtainActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(ElectricityCurtainActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
-                                cStatus = "00";
-                                keyInit();
-                                close_ibtn.setImageResource(R.mipmap.window_close_button);
-                                cImageview.setImageResource(R.mipmap.window_close);
-                                close_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                curtainStatus_tv.setText("状态:关闭");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(ElectricityCurtainActivity.this, "网络超时", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
 
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -292,7 +153,7 @@ public class ElectricityCurtainActivity extends BaseActivity implements View.OnC
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId +
                     orderMethod + methodType + orderId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device_id", deviceId);
@@ -302,7 +163,87 @@ public class ElectricityCurtainActivity extends BaseActivity implements View.OnC
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", orderMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    Log.e(TAG + "窗帘操作", s);
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    switch(arg1){
+                        case 2://开启
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(ElectricityCurtainActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(ElectricityCurtainActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
+                                    cStatus = "01";
+                                    keyInit();
+                                    powersource_ibtn.setImageResource(R.mipmap.window_open_button);
+                                    cImageview.setImageResource(R.mipmap.window_open);
+                                    open_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    curtainStatus_tv.setText("状态:开启");
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 3://暂停
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(ElectricityCurtainActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(ElectricityCurtainActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
+                                    cStatus = "02";
+                                    keyInit();
+                                    curtainstatus_ibtn.setImageResource(R.mipmap.window_suspend_button);
+                                    cImageview.setImageResource(R.mipmap.window_suspend);
+                                    suspend_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    curtainStatus_tv.setText("状态:暂停");
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 4://关闭
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(ElectricityCurtainActivity.this, jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(ElectricityCurtainActivity.this, "操作成功", Toast.LENGTH_SHORT).show();
+                                    cStatus = "00";
+                                    keyInit();
+                                    close_ibtn.setImageResource(R.mipmap.window_close_button);
+                                    cImageview.setImageResource(R.mipmap.window_close);
+                                    close_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    curtainStatus_tv.setText("状态:关闭");
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                        break;
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(ElectricityCurtainActivity.this, "网络超时", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -310,22 +251,82 @@ public class ElectricityCurtainActivity extends BaseActivity implements View.OnC
     /**
      * 获取窗帘的详情
      */
-    private void getStatus(String deviceId,String deviceType){
+    private void getStatus(String deviceid,String devicetype){
         Utils.showWaitDialog(getString(R.string.loadtext_load), ElectricityCurtainActivity.this, mWaitDialog);
         setAccount();
-        Log.e(TAG + "窗帘", deviceId + deviceType);
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            String sign = MD5Utils.MD5Encode(aesAccount + deviceid + devicetype + engineId + method + token + URLUtils.MD5_SIGN, "");
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
-            xutilsHelper.add("controlled_device_id", deviceId);
-            xutilsHelper.add("electric_type_id", deviceType);
+            xutilsHelper.add("controlled_device_id", deviceid);
+            xutilsHelper.add("electric_type_id", devicetype);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String tvResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "窗帘详情", tvResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(tvResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
+                            cName = jsonBasic.getString("controlled_device_name");
+                            cRoom = jsonBasic.getString("room_name");
+                            curtainName_tv.setText(cName);
+                            roomName_tv.setText(cRoom);
+                            roomId = jsonBasic.getString("room_id");
+                            deviceId = jsonBasic.getString("controlled_device_id");
+                            deviceType = jsonBasic.getString("electric_type_id");
+                            cStatus = jsonBasic.getString("status");
+                            if ("00".equals(cStatus)) {//关闭
+                                isClose = true;
+                                keyInit();
+                                close_ibtn.setImageResource(R.mipmap.window_close_button);
+                                cImageview.setImageResource(R.mipmap.window_close);
+                                close_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                curtainStatus_tv.setText("状态:关闭");
+                            } else if ("02".equals(cStatus)) {//暂停
+                                isSuspend = true;
+                                keyInit();
+                                curtainstatus_ibtn.setImageResource(R.mipmap.window_suspend_button);
+                                cImageview.setImageResource(R.mipmap.window_suspend);
+                                suspend_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                curtainStatus_tv.setText("状态:暂停");
+                            } else if ("01".equals(cStatus)) {//开启
+                                isOpen = true;
+                                keyInit();
+                                powersource_ibtn.setImageResource(R.mipmap.window_open_button);
+                                cImageview.setImageResource(R.mipmap.window_open);
+                                open_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                curtainStatus_tv.setText("状态:开启");
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Toast.makeText(ElectricityCurtainActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

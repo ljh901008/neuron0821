@@ -2,8 +2,6 @@ package neuron.com.scene.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,6 +13,7 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,53 +45,7 @@ public class AirTVBrandListActivity extends BaseActivity implements AdapterView.
     private Intent intent;
     private String eletricId; // 区分电视空调的标记
     private int index = 1000;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://品牌列表
-                    if (msg.what == 102) {
-                        String brandResult = (String) msg.obj;
-                        Log.e(TAG + "品牌列表", brandResult);
-                        try {
-                            JSONObject jsr = new JSONObject(brandResult);
-                            if (jsr.getInt("status") == 9999) {
-                                JSONArray jsBrand = jsr.getJSONArray("brand_list");
-                                int length = jsBrand.length();
-                                if (length > 0) {
-                                    list = new ArrayList<AirQualityBean>();
-                                    AirQualityBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject json = jsBrand.getJSONObject(i);
-                                        bean = new AirQualityBean();
-                                        bean.setSceneId("0&"+json.getString("brand_id"));
-                                        bean.setSceneName(json.getString("brand_name"));
-                                        bean.setSelect(false);
-                                        list.add(bean);
-                                    }
-                                    if ("0".equals(eletricId)) {
-                                        bean = new AirQualityBean();
-                                        bean.setSceneId("1&");
-                                        bean.setSceneName("自定义");
-                                        list.add(bean);
-                                    }
-                                    adapter = new AirQualityAdapter(list, AirTVBrandListActivity.this);
-                                    listView.setAdapter(adapter);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
 
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -166,13 +119,62 @@ public class AirTVBrandListActivity extends BaseActivity implements AdapterView.
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + electricType + brandMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("electric_type", electricType);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", brandMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String brandResult) {
+                    Log.e(TAG + "品牌列表", brandResult);
+                    try {
+                        JSONObject jsr = new JSONObject(brandResult);
+                        if (jsr.getInt("status") == 9999) {
+                            JSONArray jsBrand = jsr.getJSONArray("brand_list");
+                            int length = jsBrand.length();
+                            if (length > 0) {
+                                list = new ArrayList<AirQualityBean>();
+                                AirQualityBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject json = jsBrand.getJSONObject(i);
+                                    bean = new AirQualityBean();
+                                    bean.setSceneId("0&"+json.getString("brand_id"));
+                                    bean.setSceneName(json.getString("brand_name"));
+                                    bean.setSelect(false);
+                                    list.add(bean);
+                                }
+                                if ("0".equals(eletricId)) {
+                                    bean = new AirQualityBean();
+                                    bean.setSceneId("1&");
+                                    bean.setSceneName("自定义");
+                                    list.add(bean);
+                                }
+                                adapter = new AirQualityAdapter(list, AirTVBrandListActivity.this);
+                                listView.setAdapter(adapter);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

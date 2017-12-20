@@ -5,8 +5,6 @@ import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -17,6 +15,7 @@ import com.videogo.openapi.EZOpenSDK;
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 import org.xutils.x;
 
 import java.util.LinkedList;
@@ -44,40 +43,7 @@ public class OgeApplication extends Application {
     public static String screct = "0d5590e98c3ab9e0f6248b69bf6cb5ea";
     private SharedPreferencesManager sharedPreferencesManager;
     private static Context context;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        String result = (String) msg.obj;
-                        Log.e("Application", result);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                String versionId = jsonObject.getString("version_id");
-                                String url = jsonObject.getString("url");
-                                sharedPreferencesManager.save("versionUrl", url);
-                                sharedPreferencesManager.save("versionCode", versionId);
-                                if (!TextUtils.isEmpty(versionId) && !versionId.equals(getVersion())) {
-                                    sharedPreferencesManager.save("isUpdate", URLUtils.needUpdate);
-                                } else {
-                                    sharedPreferencesManager.save("isUpdate", URLUtils.noUpdate);
-                                }
 
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     public static EZOpenSDK getOpenSDK() {
         return EZOpenSDK.getInstance();
     }
@@ -177,10 +143,46 @@ public class OgeApplication extends Application {
     }
     private void checkAppVersion(String method){
         String sign = MD5Utils.MD5Encode(method + URLUtils.MD5_SIGN, "");
-        XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other, handler);
+        XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other);
         xutilsHelper.add("method", method);
         xutilsHelper.add("sign", sign);
-        xutilsHelper.sendPost(1,getApplicationContext());
+        xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+            @Override
+            public void onSuccess(String result) {
+                Log.e("Application", result);
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+                    if (jsonObject.getInt("status") == 9999) {
+                        String versionId = jsonObject.getString("version_id");
+                        String url = jsonObject.getString("url");
+                        sharedPreferencesManager.save("versionUrl", url);
+                        sharedPreferencesManager.save("versionCode", versionId);
+                            if (!TextUtils.isEmpty(versionId) && !versionId.equals(getVersion())) {
+                                sharedPreferencesManager.save("isUpdate", URLUtils.needUpdate);
+                            } else {
+                                sharedPreferencesManager.save("isUpdate", URLUtils.noUpdate);
+                            }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable, boolean b) {
+
+            }
+
+            @Override
+            public void onCancelled(CancelledException e) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
     }
     /**
      * 2  * 获取版本号

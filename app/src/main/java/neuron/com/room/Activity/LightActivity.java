@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -13,6 +11,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -44,108 +43,7 @@ public class LightActivity extends BaseActivity implements View.OnClickListener{
     private String orderMethod = "DoOrders";
     private boolean lightTag;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://获取灯设备详情
-                    if (msg.what == 102) {
-                        String lightResult = (String) msg.obj;
-                        Log.e(TAG + "灯详情", lightResult);
-                        try {
-                            //Utils.dismissWaitDialog();
-                            Utils.dismissWaitDialog(mWaitDialog);
-                            JSONObject jsonObject = new JSONObject(lightResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject json = jsonMsg.getJSONObject("basic_msg");
-                                lightName = json.getString("controlled_device_name");
-                                lightRoom = json.getString("room_name");
-                                roomId = json.getString("room_id");
-                                lightId = json.getString("controlled_device_id");
-                                lightType = json.getString("electric_type_id");
-                                lightSite = json.getString("controlled_device_site");
-                                lightStatu = json.getString("status");
-                                deviceName_tv.setText(lightName);
-                                roomName_tv.setText(lightRoom);
-                                if ("01".equals(lightStatu)) {//开启状态
-                                    devieceImg_iv.setImageResource(R.mipmap.home_light_open);
-                                    deviceStatus_iv.setImageResource(R.mipmap.home_light_start_open);
-                                } else if ("00".equals(lightStatu)) {//关闭状态
-                                    devieceImg_iv.setImageResource(R.mipmap.home_light);
-                                    deviceStatus_iv.setImageResource(R.mipmap.home_light_shut_open);
-                                }
-                            } else {
 
-                                Toast.makeText(LightActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    } else {
-                        //Utils.dismissWaitDialog();
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(LightActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 2://关灯
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            String result = (String) msg.obj;
-                             Log.e(TAG + "result", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
-                                Toast.makeText(LightActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                devieceImg_iv.setImageResource(R.mipmap.home_light);
-                                deviceStatus_iv.setImageResource(R.mipmap.home_light_shut_open);
-                                lightStatu = "00";
-                            } else {
-                                Toast.makeText(LightActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(LightActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 3://开灯
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            String result = (String) msg.obj;
-                             Log.e(TAG + "result", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
-                                Toast.makeText(LightActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                devieceImg_iv.setImageResource(R.mipmap.home_light_open);
-                                deviceStatus_iv.setImageResource(R.mipmap.home_light_start_open);
-                                lightStatu = "01";
-
-                            } else {
-                                Toast.makeText(LightActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(LightActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -229,7 +127,7 @@ public class LightActivity extends BaseActivity implements View.OnClickListener{
             Utils.showWaitDialog("加载中...",LightActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("controlled_device_id", deviceId);
@@ -237,8 +135,60 @@ public class LightActivity extends BaseActivity implements View.OnClickListener{
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            //xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String lightResult) {
+                    Log.e(TAG + "灯详情", lightResult);
+                    try {
+                        //Utils.dismissWaitDialog();
+                        Utils.dismissWaitDialog(mWaitDialog);
+                        JSONObject jsonObject = new JSONObject(lightResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject json = jsonMsg.getJSONObject("basic_msg");
+                            lightName = json.getString("controlled_device_name");
+                            lightRoom = json.getString("room_name");
+                            roomId = json.getString("room_id");
+                            lightId = json.getString("controlled_device_id");
+                            lightType = json.getString("electric_type_id");
+                            lightSite = json.getString("controlled_device_site");
+                            lightStatu = json.getString("status");
+                            deviceName_tv.setText(lightName);
+                            roomName_tv.setText(lightRoom);
+                            if ("01".equals(lightStatu)) {//开启状态
+                                devieceImg_iv.setImageResource(R.mipmap.home_light_open);
+                                deviceStatus_iv.setImageResource(R.mipmap.home_light_start_open);
+                            } else if ("00".equals(lightStatu)) {//关闭状态
+                                devieceImg_iv.setImageResource(R.mipmap.home_light);
+                                deviceStatus_iv.setImageResource(R.mipmap.home_light_shut_open);
+                            }
+                        } else {
 
+                            Toast.makeText(LightActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(LightActivity.this, "网络不通", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -264,7 +214,7 @@ public class LightActivity extends BaseActivity implements View.OnClickListener{
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + lightId + deviceType + engineId +
                     orderMethod + methodType + orderId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device_id", lightId);
@@ -274,7 +224,66 @@ public class LightActivity extends BaseActivity implements View.OnClickListener{
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", orderMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "result", s);
+                    switch(arg1){
+                        case 2://关灯
+                            try {
+                                JSONObject json = new JSONObject(s);
+                                if (json.getInt("status") == 9999) {
+                                    Toast.makeText(LightActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    devieceImg_iv.setImageResource(R.mipmap.home_light);
+                                    deviceStatus_iv.setImageResource(R.mipmap.home_light_shut_open);
+                                    lightStatu = "00";
+                                } else {
+                                    Toast.makeText(LightActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        break;
+                        case 3://开灯
+                            try {
+                                JSONObject json = new JSONObject(s);
+                                if (json.getInt("status") == 9999) {
+                                    Toast.makeText(LightActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    devieceImg_iv.setImageResource(R.mipmap.home_light_open);
+                                    deviceStatus_iv.setImageResource(R.mipmap.home_light_start_open);
+                                    lightStatu = "01";
+
+                                } else {
+                                    Toast.makeText(LightActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                        break;
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(LightActivity.this, "网络不通", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

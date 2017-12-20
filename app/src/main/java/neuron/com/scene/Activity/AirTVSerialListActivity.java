@@ -3,8 +3,6 @@ package neuron.com.scene.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +15,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,85 +69,7 @@ public class AirTVSerialListActivity extends BaseActivity implements View.OnClic
     //温度值，模式值，风速值,电源值
     private String tempValue = "18",patternValue ="0", speedValue = "2", powerSourceValue = "";
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://电视，空调系列列表
-                    if (msg.what == 102) {
-                        String serialResult = (String) msg.obj;
-                        Log.e(TAG + "系列列表", serialResult);
-                        try {
-                            JSONObject jsr = new JSONObject(serialResult);
-                            if (jsr.getInt("status") == 9999) {
-                                JSONArray jsBrand = jsr.getJSONArray("serial_list");
-                                int length = jsBrand.length();
-                                if (length > 0) {
-                                    list = new ArrayList<AirQualityBean>();
-                                    AirQualityBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject json = jsBrand.getJSONObject(i);
-                                        bean = new AirQualityBean();
-                                        bean.setSceneId(json.getString("serial_id"));
-                                        bean.setSceneName(json.getString("serial_name"));
-                                        bean.setSelect(false);
-                                        list.add(bean);
-                                    }
-                                    room_tv.setText(list.get(tvPosition).getSceneName() + " " + tvPosition + "/" + list.size()
-                                    );
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://电视测试
-                    if (msg.what == 102) {
-                        String testTvResult = (String) msg.obj;
-                        Log.e(TAG + "测试电视", testTvResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(testTvResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(AirTVSerialListActivity.this, jsonObject.getString("error"));
-                            } else {
-                                Utils.showDialog(AirTVSerialListActivity.this,"测试成功");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(AirTVSerialListActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case 3://空调测试
-                    if (msg.what == 102) {
-                        String testairResult = (String) msg.obj;
-                        Log.e(TAG + "测试空调", testairResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(testairResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(AirTVSerialListActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(AirTVSerialListActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
 
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -254,13 +175,56 @@ public class AirTVSerialListActivity extends BaseActivity implements View.OnClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + brandId + serialMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("brand_id", brandId);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", serialMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String serialResult) {
+                    Log.e(TAG + "系列列表", serialResult);
+                    try {
+                        JSONObject jsr = new JSONObject(serialResult);
+                        if (jsr.getInt("status") == 9999) {
+                            JSONArray jsBrand = jsr.getJSONArray("serial_list");
+                            int length = jsBrand.length();
+                            if (length > 0) {
+                                list = new ArrayList<AirQualityBean>();
+                                AirQualityBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject json = jsBrand.getJSONObject(i);
+                                    bean = new AirQualityBean();
+                                    bean.setSceneId(json.getString("serial_id"));
+                                    bean.setSceneName(json.getString("serial_name"));
+                                    bean.setSelect(false);
+                                    list.add(bean);
+                                }
+                                room_tv.setText(list.get(tvPosition).getSceneName() + " " + tvPosition + "/" + list.size()
+                                );
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -475,7 +439,7 @@ public class AirTVSerialListActivity extends BaseActivity implements View.OnClic
             Log.e(TAG + "电视测试数据", tvKeyId + ",," + serialId);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + tvKeyId + testTvMethod +neuronId + serialId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -484,7 +448,39 @@ public class AirTVSerialListActivity extends BaseActivity implements View.OnClic
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", testTvMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String testTvResult) {
+                    Log.e(TAG + "测试电视", testTvResult);
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        JSONObject jsonObject = new JSONObject(testTvResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(AirTVSerialListActivity.this, jsonObject.getString("error"));
+                        } else {
+                            Utils.showDialog(AirTVSerialListActivity.this,"测试成功");
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(AirTVSerialListActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -504,7 +500,7 @@ public class AirTVSerialListActivity extends BaseActivity implements View.OnClic
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + testAirMethod + modeType + neuronId +
                     serialId + temperature + token + wind_speed + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -515,7 +511,38 @@ public class AirTVSerialListActivity extends BaseActivity implements View.OnClic
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", testAirMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(3,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String testairResult) {
+                    Log.e(TAG + "测试空调", testairResult);
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        JSONObject jsonObject = new JSONObject(testairResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(AirTVSerialListActivity.this, jsonObject.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(AirTVSerialListActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
+
         } catch (Exception e) {
             e.printStackTrace();
         }

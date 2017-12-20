@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -16,6 +14,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -47,157 +46,7 @@ public class InfraredInductionActivity extends BaseActivity implements View.OnCl
     private String somebodySceneId, nobodySceneId;
     private String infraredResult = null;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://红外感应详情
-                    if (msg.what == 102) {
-                        infraredResult = (String) msg.obj;
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Log.e(TAG + "红外人体感应详情", infraredResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(infraredResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
-                                deviceName = jsonBasic.getString("controlled_device_name");
-                                roomName = jsonBasic.getString("room_name");
-                                deviceName_tv.setText(deviceName);
-                                roomName_tv.setText(roomName);
-                                // cBrand = jsonBasic.getString("controlled_device_brand");
-                                //cSerial = jsonBasic.getString("controlled_device_serial");
-                                roomId = jsonBasic.getString("room_id");
-                                deviceId = jsonBasic.getString("controlled_device_id");
-                                deviceType = jsonBasic.getString("electric_type_id");
-                                deviceStatus = jsonBasic.getString("status");
-                                if (!TextUtils.isEmpty(deviceStatus)) {
-                                    if ("01".equals(deviceStatus)) {//布防状态
-                                        defense_iv.setImageResource(R.mipmap.infrared_induction_security);
-                                        defenseName_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                        trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
-                                        trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
-                                    } else if ("00".equals(deviceStatus)) {//关闭状态
-                                        defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
-                                        defenseName_tv.setTextColor(getResources().getColor(R.color.white));
-                                        trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
-                                        trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
-                                    } else if ("02".equals(deviceStatus)) {//触发状态
-                                        defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
-                                        defenseName_tv.setTextColor(getResources().getColor(R.color.white));
-                                        trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger);
-                                        trrigerName_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                    }
-                                    JSONArray jsonOther = jsonMsg.getJSONArray("other_msg");
-                                    int length = jsonOther.length();
-                                    if (length > 0) {
-                                        for (int i = 0; i < length; i++) {
-                                            JSONObject jso = jsonOther.getJSONObject(i);
-                                            if (jso.getInt("condition") == 0) {//有人模式的场景名称
-                                                somebodySceneId = jso.getString("id");
-                                                somebodySceneName = jso.getString("name");
-                                            } else {//无人模式的场景名称
-                                                nobodySceneId = jso.getString("id");
-                                                nobodySceneName = jso.getString("name");
-                                            }
-                                        }
-                                    }
-                                } else {//没有设备也没有场景的情况
-                                    defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
-                                    defenseName_tv.setTextColor(getResources().getColor(R.color.white));
-                                    trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
-                                    trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 2://安防开启操作
-                    if (msg.what == 102) {
-                        String result = (String) msg.obj;
-                        Log.e("操作红外感应", result);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                Toast.makeText(InfraredInductionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                deviceStatus = "01";
-                                defense_iv.setImageResource(R.mipmap.infrared_induction_security);
-                                defenseName_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
-                                trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
-                            } else {
-                                Toast.makeText(InfraredInductionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(InfraredInductionActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 3://关闭操作
-                    if (msg.what == 102) {
-                        String result = (String) msg.obj;
-                        Log.e("操作红外感应", result);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                Toast.makeText(InfraredInductionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                deviceStatus = "00";
-                                defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
-                                defenseName_tv.setTextColor(getResources().getColor(R.color.white));
-                                trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
-                                trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
-                            } else {
-                                Toast.makeText(InfraredInductionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(InfraredInductionActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 4://触发开启操作
-                    if (msg.what == 102) {
-                        String result = (String) msg.obj;
-                        Log.e("操作红外感应", result);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                Toast.makeText(InfraredInductionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                deviceStatus = "02";
-                                defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
-                                defenseName_tv.setTextColor(getResources().getColor(R.color.white));
-                                trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger);
-                                trrigerName_tv.setTextColor(getResources().getColor(R.color.yellow));
-                            } else {
-                                Toast.makeText(InfraredInductionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(InfraredInductionActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,21 +79,100 @@ public class InfraredInductionActivity extends BaseActivity implements View.OnCl
     /**
      * 获取红外人体感应的详情
      */
-    private void getStatus(String deviceId,String deviceType){
+    private void getStatus(String deviceid,String devicetype){
         Utils.showWaitDialog(getString(R.string.loadtext_load),InfraredInductionActivity.this,mWaitDialog);
         setAccount();
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            String sign = MD5Utils.MD5Encode(aesAccount + deviceid + devicetype + engineId + method + token + URLUtils.MD5_SIGN, "");
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
-            xutilsHelper.add("controlled_device_id", deviceId);
-            xutilsHelper.add("electric_type_id", deviceType);
+            xutilsHelper.add("controlled_device_id", deviceid);
+            xutilsHelper.add("electric_type_id", devicetype);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            //xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    infraredResult = s;
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "红外人体感应详情", infraredResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(infraredResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
+                            deviceName = jsonBasic.getString("controlled_device_name");
+                            roomName = jsonBasic.getString("room_name");
+                            deviceName_tv.setText(deviceName);
+                            roomName_tv.setText(roomName);
+                            // cBrand = jsonBasic.getString("controlled_device_brand");
+                            //cSerial = jsonBasic.getString("controlled_device_serial");
+                            roomId = jsonBasic.getString("room_id");
+                            deviceId = jsonBasic.getString("controlled_device_id");
+                            deviceType = jsonBasic.getString("electric_type_id");
+                            deviceStatus = jsonBasic.getString("status");
+                            if (!TextUtils.isEmpty(deviceStatus)) {
+                                if ("01".equals(deviceStatus)) {//布防状态
+                                    defense_iv.setImageResource(R.mipmap.infrared_induction_security);
+                                    defenseName_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
+                                    trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
+                                } else if ("00".equals(deviceStatus)) {//关闭状态
+                                    defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
+                                    defenseName_tv.setTextColor(getResources().getColor(R.color.white));
+                                    trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
+                                    trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
+                                } else if ("02".equals(deviceStatus)) {//触发状态
+                                    defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
+                                    defenseName_tv.setTextColor(getResources().getColor(R.color.white));
+                                    trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger);
+                                    trrigerName_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                }
+                                JSONArray jsonOther = jsonMsg.getJSONArray("other_msg");
+                                int length = jsonOther.length();
+                                if (length > 0) {
+                                    for (int i = 0; i < length; i++) {
+                                        JSONObject jso = jsonOther.getJSONObject(i);
+                                        if (jso.getInt("condition") == 0) {//有人模式的场景名称
+                                            somebodySceneId = jso.getString("id");
+                                            somebodySceneName = jso.getString("name");
+                                        } else {//无人模式的场景名称
+                                            nobodySceneId = jso.getString("id");
+                                            nobodySceneName = jso.getString("name");
+                                        }
+                                    }
+                                }
+                            } else {//没有设备也没有场景的情况
+                                defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
+                                defenseName_tv.setTextColor(getResources().getColor(R.color.white));
+                                trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
+                                trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -316,7 +244,7 @@ public class InfraredInductionActivity extends BaseActivity implements View.OnCl
             Utils.showWaitDialog("加载中", InfraredInductionActivity.this, mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceCode + engineId + orderMethod + methodType + orderId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device_id", deviceId);
@@ -326,7 +254,84 @@ public class InfraredInductionActivity extends BaseActivity implements View.OnCl
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", orderMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1, this);
+            //xutilsHelper.sendPost(arg1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    switch(arg1){
+                        case 2:
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") == 9999) {
+                                    Toast.makeText(InfraredInductionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    deviceStatus = "01";
+                                    defense_iv.setImageResource(R.mipmap.infrared_induction_security);
+                                    defenseName_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
+                                    trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
+                                } else {
+                                    Toast.makeText(InfraredInductionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 3:
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") == 9999) {
+                                    Toast.makeText(InfraredInductionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    deviceStatus = "00";
+                                    defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
+                                    defenseName_tv.setTextColor(getResources().getColor(R.color.white));
+                                    trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger_close);
+                                    trrigerName_tv.setTextColor(getResources().getColor(R.color.white));
+                                } else {
+                                    Toast.makeText(InfraredInductionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 4:
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") == 9999) {
+                                    Toast.makeText(InfraredInductionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    deviceStatus = "02";
+                                    defense_iv.setImageResource(R.mipmap.infrared_induction_security_close);
+                                    defenseName_tv.setTextColor(getResources().getColor(R.color.white));
+                                    trriger_iv.setImageResource(R.mipmap.infrared_induction_trigger);
+                                    trrigerName_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                } else {
+                                    Toast.makeText(InfraredInductionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                        break;
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(InfraredInductionActivity.this, "网络不通", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

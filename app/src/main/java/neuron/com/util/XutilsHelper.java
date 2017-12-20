@@ -42,31 +42,23 @@ public class XutilsHelper {
 	public static final int NULL=100;//请求结果为空
 	//日志tag
 	private final String LOG_TAG="will";
-	
-
 	/**
-	 * 构造方法
-	 * 
+	 *
 	 * @param url
-	 *            网络资源地址
-	 * @param handler
-	 *            消息处理对象，用于请求完成后的怎么处理返回的结果数据
 	 */
-	public XutilsHelper(String url, Handler handler) {
-		// 保存网络资源文件名，要在转码之前保存，否则是乱码
-		filename = url.substring(url.lastIndexOf("/") + 1, url.length());
-		// 解决中文乱码问题，地址中有中文字符造成乱码问题
-		 try {
-			this.url = new String(url.getBytes(), CHARSET).replace(" ", "%20");
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-//		this.httpUtils = XutilsHttpClient.getInstence();
-		this.handler = handler;
+    public XutilsHelper(String url) {
+        // 保存网络资源文件名，要在转码之前保存，否则是乱码
+        filename = url.substring(url.lastIndexOf("/") + 1, url.length());
+        // 解决中文乱码问题，地址中有中文字符造成乱码问题
+        try {
+            this.url = new String(url.getBytes(), CHARSET).replace(" ", "%20");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 		this.params = new RequestParams(url);
-	}
+    }
 
-	public XutilsHelper() {
+    public XutilsHelper() {
 	}
 
 	/**

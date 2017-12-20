@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -17,6 +15,7 @@ import android.widget.TextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -44,68 +43,7 @@ public class EditActivity extends BaseActivity implements View.OnClickListener{
     private Intent intent;
     //设备Id,设备类别
     private String deviceId,deviceTypeId,deviceName,deviceBrand,deviceSerial,roomId,roomName;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "修改设备名称和房间", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(EditActivity.this, jsonObject.getString("error"));
-                            } else {
-                                /*Utils.showDialogTwo(EditActivity.this, "修改成功", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        deviceName = deviceName_ed.getText().toString().trim();
-                                        intent.putExtra("roomName", roomName);
-                                        if (!TextUtils.isEmpty(deviceName)) {
-                                            intent.putExtra("deviceName", deviceName);
-                                            setResult(RESULT_OK, intent);
-                                            finish();
-                                        } else {
-                                            Utils.showDialog(EditActivity.this, "请输入设备名称");
-                                        }
-                                    }
-                                });*/
-                                final AlertDialog builder = new AlertDialog.Builder(EditActivity.this).create();
-                                View view = View.inflate(EditActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("修改成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        deviceName = deviceName_ed.getText().toString().trim();
-                                        intent.putExtra("roomName", roomName);
-                                        if (!TextUtils.isEmpty(deviceName)) {
-                                            intent.putExtra("deviceName", deviceName);
-                                            setResult(RESULT_OK, intent);
-                                            finish();
-                                        } else {
-                                            Utils.showDialog(EditActivity.this, "请输入设备名称");
-                                        }
-                                        builder.dismiss();
-                                    }
-                                });
-                                builder.show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -187,7 +125,7 @@ public class EditActivity extends BaseActivity implements View.OnClickListener{
     /**
      * 修改设备名称和房间
      */
-    private void UpdateData(String deviceName,String roomId,String brand,String serial){
+    private void UpdateData(String devicename,String roomId,String brand,String serial){
         if (sharedPreferencesManager == null) {
             sharedPreferencesManager = SharedPreferencesManager.getInstance(EditActivity.this);
         }
@@ -202,14 +140,14 @@ public class EditActivity extends BaseActivity implements View.OnClickListener{
         }
         try {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("controlled_device_name", deviceName);
+            jsonObject.put("controlled_device_name", devicename);
             jsonObject.put("room_id", roomId);
             jsonObject.put("controlled_device_brand", brand);
             jsonObject.put("controlled_device_serial", serial);
             Log.e(TAG + "", jsonObject.toString());
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceTypeId + engineId + methodUpdateDevice + jsonObject.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("electric_type_id", deviceTypeId);
@@ -218,7 +156,59 @@ public class EditActivity extends BaseActivity implements View.OnClickListener{
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodUpdateDevice);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            //xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String updateResult) {
+                    Log.e(TAG + "修改设备名称和房间", updateResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(updateResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(EditActivity.this, jsonObject.getString("error"));
+                        } else {
+                            final AlertDialog builder = new AlertDialog.Builder(EditActivity.this).create();
+                            View view = View.inflate(EditActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("修改成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    deviceName = deviceName_ed.getText().toString().trim();
+                                    intent.putExtra("roomName", roomName);
+                                    if (!TextUtils.isEmpty(deviceName)) {
+                                        intent.putExtra("deviceName", deviceName);
+                                        setResult(RESULT_OK, intent);
+                                        finish();
+                                    } else {
+                                        Utils.showDialog(EditActivity.this, "请输入设备名称");
+                                    }
+                                    builder.dismiss();
+                                }
+                            });
+                            builder.show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

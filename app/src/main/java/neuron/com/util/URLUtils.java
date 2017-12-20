@@ -11,7 +11,7 @@ public class URLUtils {
     //阿里云IP
     private static final String ALI_URL= "http://ehooworld.com:8080";
 
-    public static final String URL_HEAD = ALI_URL;
+    public static final String URL_HEAD = WAI_URL;
 
     public static final String MD5_SIGN = "b083df8ce6d2ad72";
     /**

@@ -3,8 +3,6 @@ package neuron.com.room.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -20,6 +18,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +48,6 @@ public class DeviceListActivity extends BaseActivity implements View.OnClickList
     private String neuronId,account,token,engineId;
     private String deviceType;
     private String method = "GetControlledList";
-    private String deviceDataMethod = "GetControlledDeviceDetail";
     private String electricActionSetMethod = "ElectricActionSet";
     private String bindMethod = "BindControlledDevice";
     private List<AirQualityBean> list;
@@ -60,91 +58,7 @@ public class DeviceListActivity extends BaseActivity implements View.OnClickList
     private int condition;
     private int index;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://设备列表
-                    if (msg.what == 102) {
-                        String deviceResult = (String) msg.obj;
-                        try {
-                            JSONObject jsonObject = new JSONObject(deviceResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<AirQualityBean>();
-                                    AirQualityBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject jsonBean = jsonArray.getJSONObject(i);
-                                        bean = new AirQualityBean();
-                                        bean.setSelect(false);
-                                        bean.setSceneName(jsonBean.getString("controlled_device_name"));
-                                        bean.setSceneId(jsonBean.getString("controlled_device_id"));
-                                        bean.setDeviceType(jsonBean.getString("electric_type_id"));
-                                        list.add(bean);
-                                    }
-                                    adapter = new AirQualityAdapter(list, DeviceListActivity.this);
-                                    listView.setAdapter(adapter);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://获取设备指令操作
-                    if (msg.what == 102) {
-                        String result = (String) msg.obj;
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    dialogList = new ArrayList<AirQualityBean>();
-                                    AirQualityBean bean1;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject jsond = jsonArray.getJSONObject(i);
-                                        bean1 = new AirQualityBean();
-                                        bean1.setSceneId(jsond.getString("action"));
-                                        bean1.setSceneName(jsond.getString("action_desc"));
-                                        bean1.setSelect(false);
-                                        dialogList.add(bean1);
-                                    }
-                                    dialogAdapter = new AirQualityAdapter(dialogList, DeviceListActivity.this);
-                                    showDeviceStatusDialog();
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 3: //绑定设备
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String setResult = (String) msg.obj;
-                        Log.e(TAG + "绑定设备",setResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(setResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                Toast.makeText(DeviceListActivity.this, "绑定成功", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Utils.showDialog(DeviceListActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -199,14 +113,58 @@ public class DeviceListActivity extends BaseActivity implements View.OnClickList
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device_type_id", deviceType);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
+            //xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deviceResult) {
+                    try {
+                        JSONObject jsonObject = new JSONObject(deviceResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                list = new ArrayList<AirQualityBean>();
+                                AirQualityBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject jsonBean = jsonArray.getJSONObject(i);
+                                    bean = new AirQualityBean();
+                                    bean.setSelect(false);
+                                    bean.setSceneName(jsonBean.getString("controlled_device_name"));
+                                    bean.setSceneId(jsonBean.getString("controlled_device_id"));
+                                    bean.setDeviceType(jsonBean.getString("electric_type_id"));
+                                    list.add(bean);
+                                }
+                                adapter = new AirQualityAdapter(list, DeviceListActivity.this);
+                                listView.setAdapter(adapter);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -239,13 +197,56 @@ public class DeviceListActivity extends BaseActivity implements View.OnClickList
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + list.get(index).getDeviceType() + electricActionSetMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("electric_type_id", list.get(index).getDeviceType());
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", electricActionSetMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2,this);
+           // xutilsHelper.sendPost(2,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    try {
+                        JSONObject jsonObject = new JSONObject(result);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                dialogList = new ArrayList<AirQualityBean>();
+                                AirQualityBean bean1;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject jsond = jsonArray.getJSONObject(i);
+                                    bean1 = new AirQualityBean();
+                                    bean1.setSceneId(jsond.getString("action"));
+                                    bean1.setSceneName(jsond.getString("action_desc"));
+                                    bean1.setSelect(false);
+                                    dialogList.add(bean1);
+                                }
+                                dialogAdapter = new AirQualityAdapter(dialogList, DeviceListActivity.this);
+                                showDeviceStatusDialog();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -310,7 +311,7 @@ public class DeviceListActivity extends BaseActivity implements View.OnClickList
                     + bindMethod + neuronId + token + "1");
             String sign = MD5Utils.MD5Encode(aesAccount + bindDevice.toString() + engineId
                     + bindMethod + neuronId + token + "1" + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -319,7 +320,39 @@ public class DeviceListActivity extends BaseActivity implements View.OnClickList
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", bindMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(3,this);
+            //xutilsHelper.sendPost(3,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String setResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "绑定设备",setResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(setResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            Toast.makeText(DeviceListActivity.this, "绑定成功", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Utils.showDialog(DeviceListActivity.this, jsonObject.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

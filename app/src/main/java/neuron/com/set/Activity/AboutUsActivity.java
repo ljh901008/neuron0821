@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.Set;
 
@@ -53,52 +54,6 @@ public class AboutUsActivity extends BaseActivity implements View.OnClickListene
             super.handleMessage(msg);
             int arg1 = msg.arg1;
             switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "退出登录", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-
-                                Utils.showDialog(AboutUsActivity.this, jsonObject.getString("error"));
-                            } else {
-                                final AlertDialog builder = new AlertDialog.Builder(AboutUsActivity.this).create();
-                                builder.setCanceledOnTouchOutside(false);
-                                builder.setCancelable(false);
-                                View view = View.inflate(AboutUsActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("退出成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        sharedPreferencesManager.remove("token");
-                                        sharedPreferencesManager.remove("engine_id");
-                                        JPushInterface.setAlias(AboutUsActivity.this, "", new TagAliasCallback() {
-                                            @Override
-                                            public void gotResult(int i, String s, Set<String> set) {
-                                                if (i == 0) {
-                                                    Log.e(TAG + "清空别名", "清空别名成功qaq");
-                                                } else if (i == 6002) {//设置别名超时
-                                                    Log.e(TAG + "清空别名", "清空别名超时啦啦阿qaq");
-                                                }
-                                            }
-                                        });
-                                        Intent intent = new Intent(AboutUsActivity.this, LoginActivity.class);
-                                        startActivity(intent);
-                                        finish();
-                                        builder.dismiss();
-                                    }
-                                });
-                                builder.show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
                 case 2:
                     Utils.dismissWaitDialog(mWaitDialog);
                     Utils.showDialog(AboutUsActivity.this, "清除成功");
@@ -211,11 +166,71 @@ public class AboutUsActivity extends BaseActivity implements View.OnClickListene
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + outLoginMethod + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("method", outLoginMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String updateResult) {
+                    Log.e(TAG + "退出登录", updateResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(updateResult);
+                        if (jsonObject.getInt("status") != 9999) {
+
+                            Utils.showDialog(AboutUsActivity.this, jsonObject.getString("error"));
+                        } else {
+                            final AlertDialog builder = new AlertDialog.Builder(AboutUsActivity.this).create();
+                            builder.setCanceledOnTouchOutside(false);
+                            builder.setCancelable(false);
+                            View view = View.inflate(AboutUsActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("退出成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    sharedPreferencesManager.remove("token");
+                                    sharedPreferencesManager.remove("engine_id");
+                                    JPushInterface.setAlias(AboutUsActivity.this, "", new TagAliasCallback() {
+                                        @Override
+                                        public void gotResult(int i, String s, Set<String> set) {
+                                            if (i == 0) {
+                                                Log.e(TAG + "清空别名", "清空别名成功qaq");
+                                            } else if (i == 6002) {//设置别名超时
+                                                Log.e(TAG + "清空别名", "清空别名超时啦啦阿qaq");
+                                            }
+                                        }
+                                    });
+                                    Intent intent = new Intent(AboutUsActivity.this, LoginActivity.class);
+                                    startActivity(intent);
+                                    finish();
+                                    builder.dismiss();
+                                }
+                            });
+                            builder.show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

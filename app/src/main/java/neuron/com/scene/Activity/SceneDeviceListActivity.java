@@ -3,8 +3,6 @@ package neuron.com.scene.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.Display;
@@ -21,6 +19,7 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,128 +57,7 @@ public class SceneDeviceListActivity extends BaseActivity implements View.OnClic
     private List<AirQualityBean> dialogList;
     private int mIndex = 500;
     private int mPosition = 500;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://设备列表
-                    if (msg.what == 102) {
-                        String deviceResult = (String) msg.obj;
-                        Log.e(TAG + "设备列表", deviceResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(deviceResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<DeviceSetFragmentBean>();
-                                    DeviceSetFragmentBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject jsonBean = jsonArray.getJSONObject(i);
-                                        bean = new DeviceSetFragmentBean();
-                                        bean.setSelect(false);
-                                        bean.setDeviceName(jsonBean.getString("electric_name"));
-                                        bean.setNeuronId(jsonBean.getString("electric_id"));
-                                        bean.setDeviceType(jsonBean.getString("electric_type_id"));
-                                        bean.setRoomName(jsonBean.getString("room_name"));
-                                        bean.setDeviceStatus("00");
-                                        list.add(bean);
-                                    }
-                                    Log.e(TAG + "list长度", String.valueOf(list.size()));
-                                    adapter = new SceneBindDeviceListAdapter(SceneDeviceListActivity.this, list);
-                                    listView.setAdapter(adapter);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://设备指令列表
-                    if (msg.what == 102) {
-                        String result = (String) msg.obj;
-                        Log.e(TAG + "设备指令列表", result);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    dialogList = new ArrayList<AirQualityBean>();
-                                    AirQualityBean bean1;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject jsond = jsonArray.getJSONObject(i);
-                                        bean1 = new AirQualityBean();
-                                        bean1.setSceneId(jsond.getString("action"));
-                                        bean1.setSceneName(jsond.getString("action_desc"));
-                                        bean1.setSelect(false);
-                                        dialogList.add(bean1);
-                                    }
-                                    dialogAdapter = new AirQualityAdapter(dialogList, SceneDeviceListActivity.this);
-                                    showDeviceStatusDialog();
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 3://绑定设备
-                    if (msg.what == 102) {
-                        String setResult = (String) msg.obj;
-                        Log.e(TAG + "绑定设备",setResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(setResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                final AlertDialog builder = new AlertDialog.Builder(SceneDeviceListActivity.this).create();
-                                View view = View.inflate(SceneDeviceListActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("绑定成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        JSONArray jsonArray = new JSONArray();
-                                        for (int i = 0; i < list.size(); i++) {
-                                            if (list.get(i).isSelect()) {
-                                                try {
-                                                    JSONObject json = new JSONObject();
-                                                    json.put("deviceId", list.get(i).getNeuronId());
-                                                    json.put("deviceName", list.get(i).getDeviceName());
-                                                    json.put("deviceType", list.get(i).getDeviceType());
-                                                    json.put("deviceStatus", list.get(i).getDeviceStatus());
-                                                    json.put("deviceRoom", list.get(i).getRoomName());
-                                                    jsonArray.put(json);
-                                                    //DeviceSetFragmentBean bean = new DeviceSetFragmentBean();
-                                                } catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        }
-                                        intent.putExtra("devicelist", jsonArray.toString());
-                                        Log.e(TAG + "数据长度", String.valueOf(jsonArray.length()));
-                                        setResult(RESULT_OK, intent);
-                                        builder.dismiss();
-                                        SceneDeviceListActivity.this.finish();
-                                    }
-                                });
-                                builder.show();
-                            } else {
-                                Utils.showDialog(SceneDeviceListActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -290,14 +168,61 @@ public class SceneDeviceListActivity extends BaseActivity implements View.OnClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("contextual_model_id", sceneId);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deviceResult) {
+                    Log.e(TAG + "设备列表", deviceResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(deviceResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                list = new ArrayList<DeviceSetFragmentBean>();
+                                DeviceSetFragmentBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject jsonBean = jsonArray.getJSONObject(i);
+                                    bean = new DeviceSetFragmentBean();
+                                    bean.setSelect(false);
+                                    bean.setDeviceName(jsonBean.getString("electric_name"));
+                                    bean.setNeuronId(jsonBean.getString("electric_id"));
+                                    bean.setDeviceType(jsonBean.getString("electric_type_id"));
+                                    bean.setRoomName(jsonBean.getString("room_name"));
+                                    bean.setDeviceStatus("00");
+                                    list.add(bean);
+                                }
+                                Log.e(TAG + "list长度", String.valueOf(list.size()));
+                                adapter = new SceneBindDeviceListAdapter(SceneDeviceListActivity.this, list);
+                                listView.setAdapter(adapter);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -316,13 +241,56 @@ public class SceneDeviceListActivity extends BaseActivity implements View.OnClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + list.get(index).getDeviceType() + electricActionSetMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("electric_type_id", list.get(index).getDeviceType());
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", electricActionSetMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    Log.e(TAG + "设备指令列表", result);
+                    try {
+                        JSONObject jsonObject = new JSONObject(result);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                dialogList = new ArrayList<AirQualityBean>();
+                                AirQualityBean bean1;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject jsond = jsonArray.getJSONObject(i);
+                                    bean1 = new AirQualityBean();
+                                    bean1.setSceneId(jsond.getString("action"));
+                                    bean1.setSceneName(jsond.getString("action_desc"));
+                                    bean1.setSelect(false);
+                                    dialogList.add(bean1);
+                                }
+                                dialogAdapter = new AirQualityAdapter(dialogList, SceneDeviceListActivity.this);
+                                showDeviceStatusDialog();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -339,7 +307,7 @@ public class SceneDeviceListActivity extends BaseActivity implements View.OnClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + deviceList + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("contextual_model_id", sceneId);
@@ -347,7 +315,70 @@ public class SceneDeviceListActivity extends BaseActivity implements View.OnClic
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(3,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String setResult) {
+                    Log.e(TAG + "绑定设备",setResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(setResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            final AlertDialog builder = new AlertDialog.Builder(SceneDeviceListActivity.this).create();
+                            View view = View.inflate(SceneDeviceListActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("绑定成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    JSONArray jsonArray = new JSONArray();
+                                    for (int i = 0; i < list.size(); i++) {
+                                        if (list.get(i).isSelect()) {
+                                            try {
+                                                JSONObject json = new JSONObject();
+                                                json.put("deviceId", list.get(i).getNeuronId());
+                                                json.put("deviceName", list.get(i).getDeviceName());
+                                                json.put("deviceType", list.get(i).getDeviceType());
+                                                json.put("deviceStatus", list.get(i).getDeviceStatus());
+                                                json.put("deviceRoom", list.get(i).getRoomName());
+                                                jsonArray.put(json);
+                                                //DeviceSetFragmentBean bean = new DeviceSetFragmentBean();
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    }
+                                    intent.putExtra("devicelist", jsonArray.toString());
+                                    Log.e(TAG + "数据长度", String.valueOf(jsonArray.length()));
+                                    setResult(RESULT_OK, intent);
+                                    builder.dismiss();
+                                    SceneDeviceListActivity.this.finish();
+                                }
+                            });
+                            builder.show();
+                        } else {
+                            Utils.showDialog(SceneDeviceListActivity.this, jsonObject.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

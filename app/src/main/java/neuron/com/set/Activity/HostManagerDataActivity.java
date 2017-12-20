@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -26,6 +24,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,107 +60,6 @@ public class HostManagerDataActivity extends BaseActivity implements View.OnClic
     private String deleteShareAccountMethod = "RecycleSharedAccounts";
     private List<AccountDataBean> shaerAccountlist;
     private ChildAccountManagerAdapter adapter;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://被分享帐号列表
-                    if (msg.what == 102) {
-                        String accountListresult = (String) msg.obj;
-                        Log.e(TAG + "分享帐号列表", accountListresult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(accountListresult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONArray jsonArray = jsonMsg.getJSONArray("account_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    shaerAccountlist = new ArrayList<AccountDataBean>();
-                                    AccountDataBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        bean = new AccountDataBean();
-                                        JSONObject json = jsonArray.getJSONObject(i);
-                                        bean.setAccoungNumber(json.getString("account"));
-                                        bean.setUserName(json.getString("username"));
-                                        bean.setPhotoPath(json.getJSONObject("photo_path").getString("Android"));
-                                        bean.setEdit(true);
-                                        bean.setSelect(false);
-                                        bean.setShow(false);
-                                        shaerAccountlist.add(bean);
-                                    }
-                                    adapter = new ChildAccountManagerAdapter(shaerAccountlist, HostManagerDataActivity.this);
-                                    accountListView.setAdapter(adapter);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://修改名称
-                    if (msg.what == 102) {
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "修改名称", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                               /* Utils.showDialogTwo(HostManagerDataActivity.this, "修改成功", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        Intent intent = new Intent(HostManagerDataActivity.this, HostManagerActivity.class);
-                                        startActivity(intent);
-                                        dialogInterface.dismiss();
-                                    }
-                                });*/
-                                final AlertDialog builder = new AlertDialog.Builder(HostManagerDataActivity.this).create();
-                                View view = View.inflate(HostManagerDataActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("修改成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        intent.putExtra("engineName", engineName);
-                                        setResult(RESULT_OK, intent);
-                                        finish();
-                                        builder.dismiss();
-                                    }
-                                });
-                                builder.show();
-                            } else {
-                                Utils.showDialog(HostManagerDataActivity.this, jsonObject.getString("erroe"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-                    break;
-                case 3://删除分享帐号
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "删除",deleteResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(deleteResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                Toast.makeText(HostManagerDataActivity.this, jsonObject.getString("msg"), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(HostManagerDataActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-                    break;
-                default:
-                break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -213,7 +111,7 @@ public class HostManagerDataActivity extends BaseActivity implements View.OnClic
                         shaerAccountlist.remove(position);
 
                         adapter.notifyDataSetChanged();
-                        deleteShareAccount(position,3);
+                        deleteShareAccount(position);
                         break;
                     default:
                         break;
@@ -242,13 +140,60 @@ public class HostManagerDataActivity extends BaseActivity implements View.OnClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + shaareAccountMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("method", shaareAccountMethod);
             xutilsHelper.add("token", token);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String accountListresult) {
+                    Log.e(TAG + "分享帐号列表", accountListresult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(accountListresult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONArray jsonArray = jsonMsg.getJSONArray("account_list");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                shaerAccountlist = new ArrayList<AccountDataBean>();
+                                AccountDataBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    bean = new AccountDataBean();
+                                    JSONObject json = jsonArray.getJSONObject(i);
+                                    bean.setAccoungNumber(json.getString("account"));
+                                    bean.setUserName(json.getString("username"));
+                                    bean.setPhotoPath(json.getJSONObject("photo_path").getString("Android"));
+                                    bean.setEdit(true);
+                                    bean.setSelect(false);
+                                    bean.setShow(false);
+                                    shaerAccountlist.add(bean);
+                                }
+                                adapter = new ChildAccountManagerAdapter(shaerAccountlist, HostManagerDataActivity.this);
+                                accountListView.setAdapter(adapter);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -256,9 +201,9 @@ public class HostManagerDataActivity extends BaseActivity implements View.OnClic
 
     /**
      * 修改控制主机名称
-     * @param index
+     *
      */
-    private void ChangeHostMagName(int index,String engineName){
+    private void ChangeHostMagName(String engineName){
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String hostMagName = hostMgeName_ed.getText().toString().trim();
@@ -269,14 +214,60 @@ public class HostManagerDataActivity extends BaseActivity implements View.OnClic
                 json.put("device_name", engineName);
                 json.put("room_id", "");
                 String sign = MD5Utils.MD5Encode(aesAccount + json.toString() + updateMethod + token + URLUtils.MD5_SIGN, "");
-                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
                 xutilsHelper.add("account", aesAccount);
                 xutilsHelper.add("engine_id", "");
                 xutilsHelper.add("device", json.toString());
                 xutilsHelper.add("token", token);
                 xutilsHelper.add("method", updateMethod);
                 xutilsHelper.add("sign", sign);
-                xutilsHelper.sendPost(index, this);
+                xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                    @Override
+                    public void onSuccess(String updateResult) {
+                        Log.e(TAG + "修改名称", updateResult);
+                        try {
+                            JSONObject jsonObject = new JSONObject(updateResult);
+                            if (jsonObject.getInt("status") == 9999) {
+
+                                final AlertDialog builder = new AlertDialog.Builder(HostManagerDataActivity.this).create();
+                                View view = View.inflate(HostManagerDataActivity.this, R.layout.dialog_textview, null);
+                                TextView title = (TextView) view.findViewById(R.id.textView1);
+                                Button button = (Button) view.findViewById(R.id.button1);
+                                title.setText("修改成功");
+                                builder.setView(view);
+                                button.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        intent.putExtra("engineName", engineName);
+                                        setResult(RESULT_OK, intent);
+                                        finish();
+                                        builder.dismiss();
+                                    }
+                                });
+                                builder.show();
+                            } else {
+                                Utils.showDialog(HostManagerDataActivity.this, jsonObject.getString("erroe"));
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable, boolean b) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(CancelledException e) {
+
+                    }
+
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -290,23 +281,52 @@ public class HostManagerDataActivity extends BaseActivity implements View.OnClic
     /**
      * 删除分享帐号
      * @param index
-     * @param arg1
      */
-    private void deleteShareAccount(int index,int arg1){
+    private void deleteShareAccount(int index){
         try {
 
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             JSONArray jsonArray = new JSONArray();
             jsonArray.put(shaerAccountlist.get(index).getAccoungNumber());
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + deleteShareAccountMethod + jsonArray.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("msg", jsonArray.toString());
             xutilsHelper.add("method", deleteShareAccountMethod);
             xutilsHelper.add("token", token);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Log.e(TAG + "删除",deleteResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(deleteResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            Toast.makeText(HostManagerDataActivity.this, jsonObject.getString("msg"), Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(HostManagerDataActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -321,7 +341,7 @@ public class HostManagerDataActivity extends BaseActivity implements View.OnClic
             case R.id.hostmanagerdata_finish_btn://保存
                 engineName = hostMgeName_ed.getText().toString().trim();
                 if (!TextUtils.isEmpty(engineName)) {
-                    ChangeHostMagName(2, engineName);
+                    ChangeHostMagName( engineName);
                 }
                 break;
             case R.id.hostmanagerdata_deleteed_ibtn://清空名称

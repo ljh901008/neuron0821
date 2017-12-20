@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -13,6 +11,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -41,66 +40,7 @@ public class WaterFuntainActivity extends BaseActivity implements View.OnClickLi
     private String method = "GetControlledDeviceDetail";
     private String otherMsg;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1:
-                    if (msg.what == 102) {
-                    Utils.dismissWaitDialog(mWaitDialog);
-                        String result = (String) msg.obj;
-                        Log.e(TAG + "水详情", result);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
-                                deviceName = jsonBasic.getString("controlled_device_name");
-                                deviceName_tv.setText(deviceName);
-                                deviceRoom = jsonBasic.getString("room_name");
-                                roomName_tv.setText(deviceRoom);
-                                roomId = jsonBasic.getString("room_id");
-                                deviceStatus = jsonBasic.getString("status");
-                                String s[] = deviceStatus.split(",");
-                                if (s[0].equals("0")) {//是否在线
-                                    isOnline_tv.setText("(不在线)");
-                                } else {
-                                    isOnline_tv.setText("(在线)");
-                                }
-                                int w = Integer.parseInt(s[2]);
-                                if (w > 300) {
-                                    tds_tv.setText("TDS: " + w + "mg/L (差)");
-                                } else if (w > 150 && w < 300) {
-                                    tds_tv.setText("TDS: " + w + "mg/L (良)");
-                                } else if (w < 150) {
-                                    tds_tv.setText("TDS: " + w + "mg/L (优)");
-                                }
-                                temp_tv.setText("水温: " + s[3] + "℃");
-                                ceramic_tv.setText("滤芯寿命:" + s[4] + "%");
-                                residueWater_tv.setText("可用水量:" + s[5] + "L");
-                                waterValue_tv.setText(s[6]+"L");
-                                useDay_tv.setText("已用"+s[7]+"天");
-                                ceramicDay_tv.setText("可用"+s[8]+"天");
-                                otherMsg = jsonMsg.getString("other_msg");
-                            } else {
 
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(WaterFuntainActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -193,7 +133,7 @@ public class WaterFuntainActivity extends BaseActivity implements View.OnClickLi
             Utils.showWaitDialog("加载中...",WaterFuntainActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("controlled_device_id", deviceId);
@@ -201,7 +141,68 @@ public class WaterFuntainActivity extends BaseActivity implements View.OnClickLi
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            //xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "水详情", result);
+                    try {
+                        JSONObject jsonObject = new JSONObject(result);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
+                            deviceName = jsonBasic.getString("controlled_device_name");
+                            deviceName_tv.setText(deviceName);
+                            deviceRoom = jsonBasic.getString("room_name");
+                            roomName_tv.setText(deviceRoom);
+                            roomId = jsonBasic.getString("room_id");
+                            deviceStatus = jsonBasic.getString("status");
+                            String s[] = deviceStatus.split(",");
+                            if (s[0].equals("0")) {//是否在线
+                                isOnline_tv.setText("(不在线)");
+                            } else {
+                                isOnline_tv.setText("(在线)");
+                            }
+                            int w = Integer.parseInt(s[2]);
+                            if (w > 300) {
+                                tds_tv.setText("TDS: " + w + "mg/L (差)");
+                            } else if (w > 150 && w < 300) {
+                                tds_tv.setText("TDS: " + w + "mg/L (良)");
+                            } else if (w < 150) {
+                                tds_tv.setText("TDS: " + w + "mg/L (优)");
+                            }
+                            temp_tv.setText("水温: " + s[3] + "℃");
+                            ceramic_tv.setText("滤芯寿命:" + s[4] + "%");
+                            residueWater_tv.setText("可用水量:" + s[5] + "L");
+                            waterValue_tv.setText(s[6]+"L");
+                            useDay_tv.setText("已用"+s[7]+"天");
+                            ceramicDay_tv.setText("可用"+s[8]+"天");
+                            otherMsg = jsonMsg.getString("other_msg");
+                        } else {
+
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(WaterFuntainActivity.this, "网络不通", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

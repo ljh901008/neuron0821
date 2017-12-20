@@ -1,6 +1,7 @@
 package neuron.com.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,12 +11,18 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.List;
 
 import neuron.com.bean.RoomItemBean;
 import neuron.com.comneuron.R;
 import neuron.com.database.SharedPreferencesManager;
+import neuron.com.login.Activity.LoginActivity;
 import neuron.com.util.AESOperator;
 import neuron.com.util.MD5Utils;
 import neuron.com.util.URLUtils;
@@ -208,7 +215,7 @@ public class RoomAdapter extends BaseAdapter {
                         + order_id
                         + token
                         + URLUtils.MD5_SIGN, "");
-                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
                 xutilsHelper.add("account", aesAccount);
                 xutilsHelper.add("engine_id", engine_id);
                 xutilsHelper.add("device_id", list.get(position).getDeviceId());
@@ -218,7 +225,41 @@ public class RoomAdapter extends BaseAdapter {
                 xutilsHelper.add("token", token);
                 xutilsHelper.add("method","DoOrders" );
                 xutilsHelper.add("sign",sign);
-                xutilsHelper.sendPost(5, context);
+                //xutilsHelper.sendPost(5, context);
+                xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                    @Override
+                    public void onSuccess(String result) {
+                        try {
+                            JSONObject json = new JSONObject(result);
+                            int status1 = json.getInt("status");
+                            if (status1 == 9999) {
+                                Toast.makeText(context, "操作成功", Toast.LENGTH_LONG).show();
+                            } else if (status1 == 1000 || status1 == 1001) {
+                                Intent intent = new Intent(context, LoginActivity.class);
+                                context.startActivity(intent);
+                            } else {
+                                Toast.makeText(context, json.getString("error"), Toast.LENGTH_LONG).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable, boolean b) {
+                        Toast.makeText(context, "网络不通", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onCancelled(CancelledException e) {
+
+                    }
+
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }

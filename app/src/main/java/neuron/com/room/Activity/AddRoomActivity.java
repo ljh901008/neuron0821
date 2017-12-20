@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -18,6 +16,7 @@ import android.widget.TextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.MainActivity;
@@ -46,68 +45,7 @@ public class AddRoomActivity extends BaseActivity implements View.OnClickListene
     private String ADDROOM_METHOD = "AddRoom";
     private Intent intent;
     private int type;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://添加房间
-                    if (msg.what == 102) {
-                        String result = (String) msg.obj;
-                        Log.e("添加房间", result);
-                        try {
-                            JSONObject jsonObject = new JSONObject(result);
-                            if (jsonObject.getInt("status") == 9999) {
-                               /* Utils.showDialogTwo(AddRoomActivity.this, "添加成功", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        if (type == 1) {//首页
-                                            Intent intent = new Intent(AddRoomActivity.this, MainActivity.class);
-                                            startActivity(intent);
-                                        } else if (type == 2) {//其他页面
-                                            Intent i1 = new Intent(AddRoomActivity.this, RoomListActivity.class);
-                                            startActivity(i1);
-                                        }
-                                        dialogInterface.dismiss();
-                                    }
-                                });*/
-                                final AlertDialog.Builder builder = new AlertDialog.Builder(AddRoomActivity.this);
-                                View view = View.inflate(AddRoomActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("添加成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        if (type == 1) {//首页
-                                            Intent intent = new Intent(AddRoomActivity.this, MainActivity.class);
-                                            startActivity(intent);
-                                        } else if (type == 2) {//其他页面
-                                            //Intent i1 = new Intent(AddRoomActivity.this, RoomListActivity.class);
-                                            //startActivity(i1);
-                                            intent.putExtra("tag", 1);
-                                            setResult(RESULT_OK, intent);
-                                            finish();
-                                        }
-                                        builder.create().dismiss();
-                                    }
-                                });
-                                builder.create().show();
-                            } else {
-                                Utils.showDialog(AddRoomActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -157,14 +95,79 @@ public class AddRoomActivity extends BaseActivity implements View.OnClickListene
                             jsonObject.put("desc", "");
                             Log.e(TAG + "添加房间数据流",aesAccount+"," + engine_id+"," + ADDROOM_METHOD+"," + jsonObject.toString()+"," + token+"," + URLUtils.MD5_SIGN);
                             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + ADDROOM_METHOD + jsonObject.toString() + token + URLUtils.MD5_SIGN, "");
-                            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+                            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
                             xutilsHelper.add("account", aesAccount);
                             xutilsHelper.add("engine_id", engine_id);
                             xutilsHelper.add("msg", jsonObject.toString());
                             xutilsHelper.add("method", ADDROOM_METHOD);
                             xutilsHelper.add("token", token);
                             xutilsHelper.add("sign", sign);
-                            xutilsHelper.sendPost(1,this);
+                            //xutilsHelper.sendPost(1,this);
+                            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                                @Override
+                                public void onSuccess(String result) {
+                                    try {
+                                        JSONObject jsonObject = new JSONObject(result);
+                                        if (jsonObject.getInt("status") == 9999) {
+                               /* Utils.showDialogTwo(AddRoomActivity.this, "添加成功", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        if (type == 1) {//首页
+                                            Intent intent = new Intent(AddRoomActivity.this, MainActivity.class);
+                                            startActivity(intent);
+                                        } else if (type == 2) {//其他页面
+                                            Intent i1 = new Intent(AddRoomActivity.this, RoomListActivity.class);
+                                            startActivity(i1);
+                                        }
+                                        dialogInterface.dismiss();
+                                    }
+                                });*/
+                                            final AlertDialog.Builder builder = new AlertDialog.Builder(AddRoomActivity.this);
+                                            View view = View.inflate(AddRoomActivity.this, R.layout.dialog_textview, null);
+                                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                                            Button button = (Button) view.findViewById(R.id.button1);
+                                            title.setText("添加成功");
+                                            builder.setView(view);
+                                            button.setOnClickListener(new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View view) {
+                                                    if (type == 1) {//首页
+                                                        Intent intent = new Intent(AddRoomActivity.this, MainActivity.class);
+                                                        startActivity(intent);
+                                                    } else if (type == 2) {//其他页面
+                                                        //Intent i1 = new Intent(AddRoomActivity.this, RoomListActivity.class);
+                                                        //startActivity(i1);
+                                                        intent.putExtra("tag", 1);
+                                                        setResult(RESULT_OK, intent);
+                                                        finish();
+                                                    }
+                                                    builder.create().dismiss();
+                                                }
+                                            });
+                                            builder.create().show();
+                                        } else {
+                                            Utils.showDialog(AddRoomActivity.this, jsonObject.getString("error"));
+                                        }
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onError(Throwable throwable, boolean b) {
+
+                                }
+
+                                @Override
+                                public void onCancelled(CancelledException e) {
+
+                                }
+
+                                @Override
+                                public void onFinished() {
+
+                                }
+                            });
 
                         } catch (Exception e) {
                             e.printStackTrace();

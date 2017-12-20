@@ -35,6 +35,7 @@ import com.videogo.exception.BaseException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,155 +94,12 @@ public class DeviceSetFragment extends Fragment implements AdapterView.OnItemCli
             super.handleMessage(msg);
             int arg1 = msg.arg1;
             switch(arg1){
-                case 1://设备列表
-                    if (msg.what == 102) {
-                       // Utils.dismissWaitDialog();
-                        String deviceData = (String) msg.obj;
-                        Log.e(TAG + "节点设备列表",deviceData);
-                        try {
-                            JSONObject jsonObject = new JSONObject(deviceData);
-                            int status = jsonObject.getInt("status");
-                            if (status == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("neuron_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<DeviceSetFragmentBean>();
-                                    DeviceSetFragmentBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject deviceJson = jsonArray.getJSONObject(i);
-                                        bean = new DeviceSetFragmentBean();
-                                        bean.setNeuronId(deviceJson.getString("neuron_id"));
-                                        bean.setDeviceSerial(deviceJson.getString("serial_number"));
-                                        bean.setRoomId(deviceJson.getString("room_id"));
-                                        bean.setRoomName(deviceJson.getString("room_name"));
-                                        //bean.setDeviceStatus(deviceJson.getString("status"));
-                                        bean.setDeviceName(deviceJson.getString("neuron_name"));
-                                        bean.setDeviceType(deviceJson.getString("device_type_id"));
-                                        list.add(bean);
-                                    }
-                                    if (isFirst) {
-                                        adapter = new DeviceSetFragmentAdapter(getActivity(), list);
-                                        listView.setAdapter(adapter);
-                                        isFirst = false;
-                                    } else {
-                                        adapter.setList(list);
-                                        adapter.notifyDataSetChanged();
-                                    }
-                                }
-                            }else if (status == 1000 || status == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                   // Utils.dismissWaitDialog();
-                    break;
-                case 2://删除普通节点设备
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "删除节点设备", deleteResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(deleteResult);
-                            int status1 = jsonObject.getInt("status");
-                            if (status1 != 9999) {
-                                Utils.showDialog(getActivity(), jsonObject.getString("error"));
-                            } else if (status1 == 1000 || status1 == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            } else {
-                                Utils.showDialog(getActivity(), "删除成功");
-                                list.remove(mIndex);
-                                adapter.setList(list);
-                                adapter.notifyDataSetChanged();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    break;
                 case 3://删除摄像头
                     if (msg.what == 1) {
                         boolean b = (boolean) msg.obj;
                         if (b) {
                             deleteDevice(deviceSerial, neuronId);
                         }
-                    }
-                    break;
-                case 6://房间列表
-                    if (msg.what == 102) {
-                        String roomResult = (String) msg.obj;
-                        Log.e(TAG + "房间列表", roomResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(roomResult);
-                            int status2 = jsonObject.getInt("status");
-                            if (status2 == 9999) {
-                                JSONArray roomArray = jsonObject.getJSONArray("room_list");
-                                int roomLength = roomArray.length();
-                                if (roomLength > 0) {
-                                    listSY = new ArrayList<SY_PopuWBean>();
-                                    SY_PopuWBean sy_popuWBean;
-                                    for (int k = 0; k < roomLength; k++) {
-                                        JSONObject roomJs = roomArray.getJSONObject(k);
-                                        sy_popuWBean = new SY_PopuWBean();
-                                        sy_popuWBean.setHomeName(roomJs.getString("room_name"));
-                                        sy_popuWBean.setHomeId(roomJs.getString("room_id"));
-                                        listSY.add(sy_popuWBean);
-                                    }
-                                    if (sy_popuWAdapter == null) {
-                                        sy_popuWAdapter = new SY_PopuWAdapter(getActivity(), listSY);
-                                        showPopuWindow(0);
-                                    } else {
-                                        sy_popuWAdapter.setList(listSY);
-                                        showPopuWindow(1);
-                                    }
-                                }
-                            }else if (status2 == 1000 || status2 == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 4://根据房间显示节点设备列表
-                    if (msg.what == 102) {
-                        String s = (String) msg.obj;
-                        try {
-                            JSONObject jsonObject = new JSONObject(s);
-                            int status3 = jsonObject.getInt("status");
-                            if (status3 == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("neuron_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<DeviceSetFragmentBean>();
-                                    DeviceSetFragmentBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject deviceJson = jsonArray.getJSONObject(i);
-                                        bean = new DeviceSetFragmentBean();
-                                        bean.setNeuronId(deviceJson.getString("neuron_id"));
-                                        bean.setDeviceSerial(deviceJson.getString("serial_number"));
-                                        bean.setRoomId(deviceJson.getString("room_id"));
-                                        bean.setRoomName(deviceJson.getString("room_name"));
-                                        bean.setDeviceStatus(deviceJson.getString("status"));
-                                        bean.setDeviceName(deviceJson.getString("neuron_name"));
-                                        bean.setDeviceType(deviceJson.getString("device_type_id"));
-                                        list.add(bean);
-                                    }
-                                    adapter.setList(list);
-                                    adapter.notifyDataSetChanged();
-                                }
-                            }else if (status3 == 1000 || status3 == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
                     }
                     break;
                 default:
@@ -339,13 +197,71 @@ public class DeviceSetFragment extends Fragment implements AdapterView.OnItemCli
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + deviceDataMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", deviceDataMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, getActivity());
+            //xutilsHelper.sendPost(1, getActivity());
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deviceData) {
+                    Log.e(TAG + "节点设备列表",deviceData);
+                    try {
+                        JSONObject jsonObject = new JSONObject(deviceData);
+                        int status = jsonObject.getInt("status");
+                        if (status == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("neuron_list");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                list = new ArrayList<DeviceSetFragmentBean>();
+                                DeviceSetFragmentBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject deviceJson = jsonArray.getJSONObject(i);
+                                    bean = new DeviceSetFragmentBean();
+                                    bean.setNeuronId(deviceJson.getString("neuron_id"));
+                                    bean.setDeviceSerial(deviceJson.getString("serial_number"));
+                                    bean.setRoomId(deviceJson.getString("room_id"));
+                                    bean.setRoomName(deviceJson.getString("room_name"));
+                                    //bean.setDeviceStatus(deviceJson.getString("status"));
+                                    bean.setDeviceName(deviceJson.getString("neuron_name"));
+                                    bean.setDeviceType(deviceJson.getString("device_type_id"));
+                                    list.add(bean);
+                                }
+                                if (isFirst) {
+                                    adapter = new DeviceSetFragmentAdapter(getActivity(), list);
+                                    listView.setAdapter(adapter);
+                                    isFirst = false;
+                                } else {
+                                    adapter.setList(list);
+                                    adapter.notifyDataSetChanged();
+                                }
+                            }
+                        }else if (status == 1000 || status == 1001) {
+                            Intent intent = new Intent(getActivity(), LoginActivity.class);
+                            startActivity(intent);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -473,14 +389,52 @@ public class DeviceSetFragment extends Fragment implements AdapterView.OnItemCli
             JSONArray deviceList = new JSONArray();
             deviceList.put(jsonObject);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceList.toString() + engineId + deleteMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device_list", deviceList.toString());
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", deleteMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2, getActivity());
+            //xutilsHelper.sendPost(2, getActivity());
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Log.e(TAG + "删除节点设备", deleteResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(deleteResult);
+                        int status1 = jsonObject.getInt("status");
+                        if (status1 != 9999) {
+                            Utils.showDialog(getActivity(), jsonObject.getString("error"));
+                        } else if (status1 == 1000 || status1 == 1001) {
+                            Intent intent = new Intent(getActivity(), LoginActivity.class);
+                            startActivity(intent);
+                        } else {
+                            Utils.showDialog(getActivity(), "删除成功");
+                            list.remove(mIndex);
+                            adapter.setList(list);
+                            adapter.notifyDataSetChanged();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -493,13 +447,65 @@ public class DeviceSetFragment extends Fragment implements AdapterView.OnItemCli
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + QUERYHOMELIST + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", QUERYHOMELIST);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(6, getActivity());
+            //xutilsHelper.sendPost(6, getActivity());
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String roomResult) {
+                    Log.e(TAG + "房间列表", roomResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(roomResult);
+                        int status2 = jsonObject.getInt("status");
+                        if (status2 == 9999) {
+                            JSONArray roomArray = jsonObject.getJSONArray("room_list");
+                            int roomLength = roomArray.length();
+                            if (roomLength > 0) {
+                                listSY = new ArrayList<SY_PopuWBean>();
+                                SY_PopuWBean sy_popuWBean;
+                                for (int k = 0; k < roomLength; k++) {
+                                    JSONObject roomJs = roomArray.getJSONObject(k);
+                                    sy_popuWBean = new SY_PopuWBean();
+                                    sy_popuWBean.setHomeName(roomJs.getString("room_name"));
+                                    sy_popuWBean.setHomeId(roomJs.getString("room_id"));
+                                    listSY.add(sy_popuWBean);
+                                }
+                                if (sy_popuWAdapter == null) {
+                                    sy_popuWAdapter = new SY_PopuWAdapter(getActivity(), listSY);
+                                    showPopuWindow(0);
+                                } else {
+                                    sy_popuWAdapter.setList(listSY);
+                                    showPopuWindow(1);
+                                }
+                            }
+                        }else if (status2 == 1000 || status2 == 1001) {
+                            Intent intent = new Intent(getActivity(), LoginActivity.class);
+                            startActivity(intent);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -529,14 +535,65 @@ public class DeviceSetFragment extends Fragment implements AdapterView.OnItemCli
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + getRoomDeviceListMethod + roomId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("room_id", roomId);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", getRoomDeviceListMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(4, getActivity());
+           // xutilsHelper.sendPost(4, getActivity());
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    try {
+                        JSONObject jsonObject = new JSONObject(s);
+                        int status3 = jsonObject.getInt("status");
+                        if (status3 == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("neuron_list");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                list = new ArrayList<DeviceSetFragmentBean>();
+                                DeviceSetFragmentBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject deviceJson = jsonArray.getJSONObject(i);
+                                    bean = new DeviceSetFragmentBean();
+                                    bean.setNeuronId(deviceJson.getString("neuron_id"));
+                                    bean.setDeviceSerial(deviceJson.getString("serial_number"));
+                                    bean.setRoomId(deviceJson.getString("room_id"));
+                                    bean.setRoomName(deviceJson.getString("room_name"));
+                                    bean.setDeviceStatus(deviceJson.getString("status"));
+                                    bean.setDeviceName(deviceJson.getString("neuron_name"));
+                                    bean.setDeviceType(deviceJson.getString("device_type_id"));
+                                    list.add(bean);
+                                }
+                                adapter.setList(list);
+                                adapter.notifyDataSetChanged();
+                            }
+                        }else if (status3 == 1000 || status3 == 1001) {
+                            Intent intent = new Intent(getActivity(), LoginActivity.class);
+                            startActivity(intent);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

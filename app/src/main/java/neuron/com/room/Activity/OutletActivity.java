@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +12,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -43,101 +42,7 @@ public class OutletActivity extends BaseActivity implements View.OnClickListener
     private String orderMethod = "DoOrders";
     private boolean isOpen;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        String Result = (String) msg.obj;
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Log.e(TAG + "插座详情", Result);
-                        try {
-                            JSONObject jsonObject = new JSONObject(Result);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
-                                deviceName = jsonBasic.getString("controlled_device_name");
-                                roomName = jsonBasic.getString("room_name");
-                                deviceName_tv.setText(deviceName);
-                                roomName_tv.setText(roomName);
-                                // cBrand = jsonBasic.getString("controlled_device_brand");
-                                //cSerial = jsonBasic.getString("controlled_device_serial");
-                                roomId = jsonBasic.getString("room_id");
-                                deviceId = jsonBasic.getString("controlled_device_id");
-                                deviceType = jsonBasic.getString("electric_type_id");
-                                deviceStatus = jsonBasic.getString("status");
-                                if ("00".equals(deviceStatus)) {//关闭
-                                    close_iv.setImageResource(R.mipmap.tv_close);
-                                    close_tv.setText("关闭");
-                                    close_tv.setTextColor(getResources().getColor(R.color.white));
-                                } else {//开启
-                                    close_iv.setImageResource(R.mipmap.tv_open);
-                                    close_tv.setText("开启");
-                                    close_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Toast.makeText(OutletActivity.this, "数据异常", Toast.LENGTH_LONG).show();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 2://开启操作
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "插座操作", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(OutletActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(OutletActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                close_iv.setImageResource(R.mipmap.tv_open);
-                                close_tv.setText("开启");
-                                close_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                deviceStatus = "01";
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 3://关闭操作
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "插座关闭操作", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(OutletActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(OutletActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                                close_iv.setImageResource(R.mipmap.tv_close);
-                                close_tv.setText("关闭");
-                                close_tv.setTextColor(getResources().getColor(R.color.white));
-                                deviceStatus = "00";
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -214,13 +119,13 @@ public class OutletActivity extends BaseActivity implements View.OnClickListener
      * @param orderId    指令
      * @param deviceCode   设备是节点设备还是电器设备
      */
-    private void setDevice(String methodType,String orderId,String deviceCode,int arg1){
+    private void setDevice(String methodType,String orderId,String deviceCode,int num){
         setAccount();
         try {
             Utils.showWaitDialog("加载中...", OutletActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceCode + engineId + orderMethod + methodType + orderId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device_id", deviceId);
@@ -230,7 +135,65 @@ public class OutletActivity extends BaseActivity implements View.OnClickListener
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", orderMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "插座操作", s);
+                    switch(num){
+                        case 2:
+
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(OutletActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(OutletActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    close_iv.setImageResource(R.mipmap.tv_open);
+                                    close_tv.setText("开启");
+                                    close_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    deviceStatus = "01";
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 3:
+                            try {
+                                JSONObject jsonObject = new JSONObject(s);
+                                if (jsonObject.getInt("status") != 9999) {
+                                    Toast.makeText(OutletActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(OutletActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                                    close_iv.setImageResource(R.mipmap.tv_close);
+                                    close_tv.setText("关闭");
+                                    close_tv.setTextColor(getResources().getColor(R.color.white));
+                                    deviceStatus = "00";
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                        break;
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -238,21 +201,72 @@ public class OutletActivity extends BaseActivity implements View.OnClickListener
     /**
      * 获取插座详情
      */
-    private void getStatus(String deviceId,String deviceType){
+    private void getStatus(String deviceid,String devicetype){
         Utils.showWaitDialog(getString(R.string.loadtext_load),OutletActivity.this,mWaitDialog);
         setAccount();
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            String sign = MD5Utils.MD5Encode(aesAccount + deviceid + devicetype + engineId + method + token + URLUtils.MD5_SIGN, "");
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
-            xutilsHelper.add("controlled_device_id", deviceId);
-            xutilsHelper.add("electric_type_id", deviceType);
+            xutilsHelper.add("controlled_device_id", deviceid);
+            xutilsHelper.add("electric_type_id", devicetype);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            //xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String Result) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "插座详情", Result);
+                    try {
+                        JSONObject jsonObject = new JSONObject(Result);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
+                            deviceName = jsonBasic.getString("controlled_device_name");
+                            roomName = jsonBasic.getString("room_name");
+                            deviceName_tv.setText(deviceName);
+                            roomName_tv.setText(roomName);
+                            // cBrand = jsonBasic.getString("controlled_device_brand");
+                            //cSerial = jsonBasic.getString("controlled_device_serial");
+                            roomId = jsonBasic.getString("room_id");
+                            deviceId = jsonBasic.getString("controlled_device_id");
+                            deviceType = jsonBasic.getString("electric_type_id");
+                            deviceStatus = jsonBasic.getString("status");
+                            if ("00".equals(deviceStatus)) {//关闭
+                                close_iv.setImageResource(R.mipmap.tv_close);
+                                close_tv.setText("关闭");
+                                close_tv.setTextColor(getResources().getColor(R.color.white));
+                            } else {//开启
+                                close_iv.setImageResource(R.mipmap.tv_open);
+                                close_tv.setText("开启");
+                                close_tv.setTextColor(getResources().getColor(R.color.yellow));
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Toast.makeText(OutletActivity.this, "数据异常", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

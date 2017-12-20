@@ -3,8 +3,6 @@ package neuron.com.room.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Display;
@@ -22,6 +20,7 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -52,49 +51,7 @@ public class InfraredInductionEditActivity extends BaseActivity implements View.
     private String account,token, engineId;
     private String methodDeleteScene = "DelNeuronSetting";
     private String updateMethod = "UpdateControlledDevice";
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://删除场景
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "删除场景，警报",deleteResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(deleteResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                Utils.showDialog(InfraredInductionEditActivity.this, "删除成功");
-                            } else {
-                                Utils.showDialog(InfraredInductionEditActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://修改名称和房间
-                    if (msg.what == 102) {
-                        try {
-                            String result = (String) msg.obj;
-                            Log.e(TAG + "result", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
-                               Utils.showDialog(InfraredInductionEditActivity.this,"设置成功");
-                            } else {
-                                Utils.showDialog(InfraredInductionEditActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -323,7 +280,7 @@ public class InfraredInductionEditActivity extends BaseActivity implements View.
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deleteType +engineId + methodDeleteScene + neuronId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -331,7 +288,37 @@ public class InfraredInductionEditActivity extends BaseActivity implements View.
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodDeleteScene);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Log.e(TAG + "删除场景，警报",deleteResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(deleteResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            Utils.showDialog(InfraredInductionEditActivity.this, "删除成功");
+                        } else {
+                            Utils.showDialog(InfraredInductionEditActivity.this, jsonObject.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -361,7 +348,7 @@ public class InfraredInductionEditActivity extends BaseActivity implements View.
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             Log.e(TAG + "修改红外房间和名称数据流", aesAccount + "," + deviceId + "," + deviceType + "," + engineId + "," + updateMethod + "," + jsonObject.toString() + "," + token);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + updateMethod + jsonObject.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("electric_type_id", deviceType);
@@ -370,7 +357,38 @@ public class InfraredInductionEditActivity extends BaseActivity implements View.
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", updateMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2, this);
+            //xutilsHelper.sendPost(2, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    try {
+                        Log.e(TAG + "result", result);
+                        JSONObject json = new JSONObject(result);
+                        if (json.getInt("status") == 9999) {
+                            Utils.showDialog(InfraredInductionEditActivity.this,"设置成功");
+                        } else {
+                            Utils.showDialog(InfraredInductionEditActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

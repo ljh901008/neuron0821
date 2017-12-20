@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +12,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -49,140 +48,7 @@ public class AirConditionActivity extends BaseActivity implements View.OnClickLi
     private WaitDialog mWaitDialog;
     //温度值，模式值，风速值,电源值
     private String tempValue,patternValue, speedValue,powerSourceValue;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        String tvResult = (String) msg.obj;
-                        Log.e(TAG + "空调详情",tvResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(tvResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
-                                airName = jsonBasic.getString("controlled_device_name");
-                                airRoom = jsonBasic.getString("room_name");
-                                airName_tv.setText(airName);
-                                roomName_tv.setText(airRoom);
-                                airBrand = jsonBasic.getString("controlled_device_brand");
-                                airSerial = jsonBasic.getString("controlled_device_serial");
-                                roomId = jsonBasic.getString("room_id");
-                                deviceId = jsonBasic.getString("controlled_device_id");
-                                deviceType = jsonBasic.getString("electric_type_id");
-                                airStatus = jsonBasic.getString("status");
-                                if (!TextUtils.isEmpty(airStatus)) {
-                                    String[] s = airStatus.split(",");
-                                    powerSourceValue = s[0];//电源值
-                                    patternValue = s[1];//模式
-                                    speedValue = s[2];//风速
-                                    tempValue = s[3];//温度值
-                                    if ("0".equals(s[0])) {
-                                        powersource_ibtn.setImageResource(R.mipmap.air_temperature_open);
-                                        powerSource_tv.setText("开启");
-                                        powerSource_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                        if ("0".equals(s[2])) {
-                                            pattern_ibtn.setImageResource(R.mipmap.air_temperature_cold);
-                                            pattern_tv.setText("制冷");
-                                            airPattern_tv.setText("模式:制冷");
-                                            pattern_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                        } else {
-                                            pattern_ibtn.setImageResource(R.mipmap.air_temperature_hot);
-                                            pattern_tv.setText("制热");
-                                            airPattern_tv.setText("模式:制热");
-                                            pattern_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                        }
-                                        if ("0".equals(s[2])) {
-                                            airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed);
-                                            airSpeed_tv.setText("风速:高");
-                                            airSpeedtwo_tv.setText("风速:高");
-                                            airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                        } else if ("1".equals(s[2])) {
-                                            airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed);
-                                            airSpeed_tv.setText("风速:中");
-                                            airSpeedtwo_tv.setText("风速:中");
-                                            airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                        } else {
-                                            airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed);
-                                            airSpeed_tv.setText("风速:低");
-                                            airSpeedtwo_tv.setText("风速:低");
-                                            airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.yellow));
-                                        }
-                                    } else {
-                                        powersource_ibtn.setImageResource(R.mipmap.air_temperature_close);
-                                        powerSource_tv.setText("关闭");
-                                        powerSource_tv.setTextColor(getResources().getColor(R.color.white));
-                                        if ("0".equals(s[1])) {
-                                            pattern_ibtn.setImageResource(R.mipmap.air_temperature_cold_close);
-                                            pattern_tv.setText("制冷");
-                                            airPattern_tv.setText("模式:制冷");
-                                            pattern_tv.setTextColor(getResources().getColor(R.color.white));
-                                        } else {
-                                            pattern_ibtn.setImageResource(R.mipmap.air_temperature_hot_close);
-                                            pattern_tv.setText("制热");
-                                            airPattern_tv.setText("模式:制热");
-                                            pattern_tv.setTextColor(getResources().getColor(R.color.white));
-                                        }
-                                        if ("0".equals(s[2])) {
-                                            airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed_close);
-                                            airSpeed_tv.setText("风速:高");
-                                            airSpeedtwo_tv.setText("风速:高");
-                                            airSpeed_tv.setTextColor(getResources().getColor(R.color.white));
-                                            airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.white));
-                                        } else if ("1".equals(s[2])) {
-                                            airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed_close);
-                                            airSpeed_tv.setText("风速:中");
-                                            airSpeedtwo_tv.setText("风速:中");
-                                            airSpeed_tv.setTextColor(getResources().getColor(R.color.white));
-                                            airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.white));
-                                        } else {
-                                            airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed_close);
-                                            airSpeed_tv.setText("风速:低");
-                                            airSpeedtwo_tv.setText("风速:低");
-                                            airSpeed_tv.setTextColor(getResources().getColor(R.color.white));
-                                            airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.white));
-                                        }
-                                    }
-                                    temperatureValue_tv.setText(s[3]);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(AirConditionActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case 2://操作空调
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "空调操作", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Toast.makeText(AirConditionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(AirConditionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                default:
-                    break;
-            }
 
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -398,7 +264,7 @@ public class AirConditionActivity extends BaseActivity implements View.OnClickLi
     /**
      * 获取空调的详情
      */
-    private void getStatus(String deviceId,String deviceType){
+    private void getStatus(String deviceid,String devicetype){
 
         if (sharedPreferencesManager == null) {
             sharedPreferencesManager = SharedPreferencesManager.getInstance(this);
@@ -416,16 +282,131 @@ public class AirConditionActivity extends BaseActivity implements View.OnClickLi
 
             Utils.showWaitDialog(getString(R.string.loadtext_load),AirConditionActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceType + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            String sign = MD5Utils.MD5Encode(aesAccount + deviceid + devicetype + engineId + method + token + URLUtils.MD5_SIGN, "");
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
-            xutilsHelper.add("controlled_device_id", deviceId);
-            xutilsHelper.add("electric_type_id", deviceType);
+            xutilsHelper.add("controlled_device_id", deviceid);
+            xutilsHelper.add("electric_type_id", devicetype);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+           // xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String tvResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        JSONObject jsonObject = new JSONObject(tvResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            JSONObject jsonBasic = jsonMsg.getJSONObject("basic_msg");
+                            airName = jsonBasic.getString("controlled_device_name");
+                            airRoom = jsonBasic.getString("room_name");
+                            airName_tv.setText(airName);
+                            roomName_tv.setText(airRoom);
+                            airBrand = jsonBasic.getString("controlled_device_brand");
+                            airSerial = jsonBasic.getString("controlled_device_serial");
+                            roomId = jsonBasic.getString("room_id");
+                            deviceId = jsonBasic.getString("controlled_device_id");
+                            deviceType = jsonBasic.getString("electric_type_id");
+                            airStatus = jsonBasic.getString("status");
+                            if (!TextUtils.isEmpty(airStatus)) {
+                                String[] s = airStatus.split(",");
+                                powerSourceValue = s[0];//电源值
+                                patternValue = s[1];//模式
+                                speedValue = s[2];//风速
+                                tempValue = s[3];//温度值
+                                if ("0".equals(s[0])) {
+                                    powersource_ibtn.setImageResource(R.mipmap.air_temperature_open);
+                                    powerSource_tv.setText("开启");
+                                    powerSource_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    if ("0".equals(s[2])) {
+                                        pattern_ibtn.setImageResource(R.mipmap.air_temperature_cold);
+                                        pattern_tv.setText("制冷");
+                                        airPattern_tv.setText("模式:制冷");
+                                        pattern_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    } else {
+                                        pattern_ibtn.setImageResource(R.mipmap.air_temperature_hot);
+                                        pattern_tv.setText("制热");
+                                        airPattern_tv.setText("模式:制热");
+                                        pattern_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    }
+                                    if ("0".equals(s[2])) {
+                                        airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed);
+                                        airSpeed_tv.setText("风速:高");
+                                        airSpeedtwo_tv.setText("风速:高");
+                                        airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    } else if ("1".equals(s[2])) {
+                                        airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed);
+                                        airSpeed_tv.setText("风速:中");
+                                        airSpeedtwo_tv.setText("风速:中");
+                                        airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    } else {
+                                        airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed);
+                                        airSpeed_tv.setText("风速:低");
+                                        airSpeedtwo_tv.setText("风速:低");
+                                        airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.yellow));
+                                    }
+                                } else {
+                                    powersource_ibtn.setImageResource(R.mipmap.air_temperature_close);
+                                    powerSource_tv.setText("关闭");
+                                    powerSource_tv.setTextColor(getResources().getColor(R.color.white));
+                                    if ("0".equals(s[1])) {
+                                        pattern_ibtn.setImageResource(R.mipmap.air_temperature_cold_close);
+                                        pattern_tv.setText("制冷");
+                                        airPattern_tv.setText("模式:制冷");
+                                        pattern_tv.setTextColor(getResources().getColor(R.color.white));
+                                    } else {
+                                        pattern_ibtn.setImageResource(R.mipmap.air_temperature_hot_close);
+                                        pattern_tv.setText("制热");
+                                        airPattern_tv.setText("模式:制热");
+                                        pattern_tv.setTextColor(getResources().getColor(R.color.white));
+                                    }
+                                    if ("0".equals(s[2])) {
+                                        airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed_close);
+                                        airSpeed_tv.setText("风速:高");
+                                        airSpeedtwo_tv.setText("风速:高");
+                                        airSpeed_tv.setTextColor(getResources().getColor(R.color.white));
+                                        airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.white));
+                                    } else if ("1".equals(s[2])) {
+                                        airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed_close);
+                                        airSpeed_tv.setText("风速:中");
+                                        airSpeedtwo_tv.setText("风速:中");
+                                        airSpeed_tv.setTextColor(getResources().getColor(R.color.white));
+                                        airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.white));
+                                    } else {
+                                        airspeed_ibtn.setImageResource(R.mipmap.air_temperature_speed_close);
+                                        airSpeed_tv.setText("风速:低");
+                                        airSpeedtwo_tv.setText("风速:低");
+                                        airSpeed_tv.setTextColor(getResources().getColor(R.color.white));
+                                        airSpeedtwo_tv.setTextColor(getResources().getColor(R.color.white));
+                                    }
+                                }
+                                temperatureValue_tv.setText(s[3]);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(AirConditionActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -456,7 +437,7 @@ public class AirConditionActivity extends BaseActivity implements View.OnClickLi
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + engineId + operationMethod
                     + modeType + temperature + token + wind_speed + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.OPERATION);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("controlled_device_id", deviceId);
@@ -466,7 +447,39 @@ public class AirConditionActivity extends BaseActivity implements View.OnClickLi
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", operationMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2,this);
+            //xutilsHelper.sendPost(2,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String updateResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "空调操作", updateResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(updateResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Toast.makeText(AirConditionActivity.this, jsonObject.getString("error"), Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(AirConditionActivity.this, "操作成功", Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

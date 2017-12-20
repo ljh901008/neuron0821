@@ -1,11 +1,8 @@
 package neuron.com.login.Activity;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -22,6 +19,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -61,134 +59,7 @@ public class RegisterActivity extends BaseActivity implements View.OnClickListen
     private RelativeLayout useragreement_rll;
     private Intent intent;
     private int type;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1){
-                case 1://获取验证码成功
-                    if (msg.what == 102) {
-                        String yzResult = (String) msg.obj;
-                        Log.e(TAG + "验证码",yzResult);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(yzResult);
-                            if (jsonDelete.getInt("status") == 9999) {
-                                Toast.makeText(RegisterActivity.this, "获取验证码成功",Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(RegisterActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://验证验证码
-                    if (msg.what == 102) {
-                        String Result = (String) msg.obj;
-                        Log.e(TAG + "验证码",Result);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(Result);
-                            if (jsonDelete.getInt("status") == 9999) {
-                               // Toast.makeText(RegisterActivity.this,"提交验证码成功",Toast.LENGTH_LONG).show();
-                                String pwd = password_ed.getText().toString().trim();
-                                if (!TextUtils.isEmpty(pwd) && Utils.rexCheckPassword(pwd)) {
-                                    Register(pwd);
-                                } else {
-                                    Toast.makeText(RegisterActivity.this,"请输入合法的密码",Toast.LENGTH_LONG).show();
-                                }
-                            } else {
-                                Toast.makeText(RegisterActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 3://忘记密码
-                    if (msg.what == 102) {
-                        String forgetPwdResult = (String) msg.obj;
-                        try {
-                            JSONObject json = new JSONObject(forgetPwdResult);
-                            if (json.getInt("status") == 9999) {
-                               /* Utils.showDialogTwo(RegisterActivity.this, "密码重置成功,请重新登陆", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                        startActivity(intent);
-                                    }
-                                });*/
-                                final AlertDialog.Builder builder = new AlertDialog.Builder(RegisterActivity.this);
-                                View view = View.inflate(RegisterActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("密码重置成功,请重新登陆");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                        startActivity(intent);
-                                    }
-                                });
-                                builder.create().show();
-                            } else {
-                                Toast.makeText(RegisterActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 4://注册
-                    int what = msg.what;
-                    if (what == 102){//注册请求成功
-                        String registResult = (String) msg.obj;
-                        try {
-                            JSONObject regJson = new JSONObject(registResult);
-                            int status = regJson.getInt("status");
-                            if (status == 9999) {//注册成功
-                                Toast.makeText(RegisterActivity.this, "注册成功", Toast.LENGTH_LONG).show();
-                                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                startActivity(intent);
-                            } else if (status == 0003) {//帐号已存在
-                                registerTiShi_rll.setVisibility(View.VISIBLE);
-                            } else {
-                                Log.e(TAG, regJson.getString("error"));
-                                Toast.makeText(RegisterActivity.this, regJson.getString("error"), Toast.LENGTH_LONG).show();
 
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (what == 101) {//注册失败
-                        Toast.makeText(RegisterActivity.this, (String) msg.obj,Toast.LENGTH_LONG).show();
-                        Log.e(TAG, "注册失败:"+(String) msg.obj);
-                    }
-                    break;
-                case 5://校验帐号
-                    if (msg.what == 102) {
-                        String s = (String) msg.obj;
-                        Log.e(TAG + "校验帐号", s);
-                        try {
-                            JSONObject jsonObject = new JSONObject(s);
-                            if (jsonObject.getInt("status") == 9999) {
-
-                            } else {
-                                Utils.showDialog(RegisterActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Toast.makeText(RegisterActivity.this, "网络不通",Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -330,13 +201,44 @@ public class RegisterActivity extends BaseActivity implements View.OnClickListen
      * @param phoneNumber  电话号码
      */
     private void getYZCode(String phoneNumber){
-        XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other, handler);
+        XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other);
         xutilsHelper.add("phone_num", phoneNumber);
         xutilsHelper.add("method", getYZCode);
         Log.e(TAG + "获取验证码", phoneNumber);
         String sign = MD5Utils.MD5Encode(getYZCode + phoneNumber + URLUtils.MD5_SIGN, "");
         xutilsHelper.add("sign", sign);
-        xutilsHelper.sendPost(1,this);
+        //xutilsHelper.sendPost(1,this);
+        xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+            @Override
+            public void onSuccess(String yzResult) {
+                Log.e(TAG + "验证码",yzResult);
+                try {
+                    JSONObject jsonDelete = new JSONObject(yzResult);
+                    if (jsonDelete.getInt("status") == 9999) {
+                        Toast.makeText(RegisterActivity.this, "获取验证码成功",Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(RegisterActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable, boolean b) {
+
+            }
+
+            @Override
+            public void onCancelled(CancelledException e) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
     }
 
     /**
@@ -346,16 +248,54 @@ public class RegisterActivity extends BaseActivity implements View.OnClickListen
      */
     private void setCheckCode(String phoneNumber, String yzCode) {
         String sign = MD5Utils.MD5Encode(checkCode + phoneNumber + yzCode + URLUtils.MD5_SIGN, "");
-        XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other, handler);
+        XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other);
         xutilsHelper.add("phone_num", phoneNumber);
         xutilsHelper.add("v_code", yzCode);
         xutilsHelper.add("method", checkCode);
         xutilsHelper.add("sign", sign);
-        xutilsHelper.sendPost(2,this);
+       // xutilsHelper.sendPost(2,this);
+        xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+            @Override
+            public void onSuccess(String Result) {
+                Log.e(TAG + "验证码",Result);
+                try {
+                    JSONObject jsonDelete = new JSONObject(Result);
+                    if (jsonDelete.getInt("status") == 9999) {
+                        // Toast.makeText(RegisterActivity.this,"提交验证码成功",Toast.LENGTH_LONG).show();
+                        String pwd = password_ed.getText().toString().trim();
+                        if (!TextUtils.isEmpty(pwd) && Utils.rexCheckPassword(pwd)) {
+                            Register(pwd);
+                        } else {
+                            Toast.makeText(RegisterActivity.this,"请输入合法的密码",Toast.LENGTH_LONG).show();
+                        }
+                    } else {
+                        Toast.makeText(RegisterActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable, boolean b) {
+
+            }
+
+            @Override
+            public void onCancelled(CancelledException e) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
     }
 
     /**
-     * 注册
+     *  注册方法
+     * @param pwd  密码password
      */
     private void Register(String pwd){
         Log.e(TAG, phoneNum + pwd);
@@ -375,7 +315,7 @@ public class RegisterActivity extends BaseActivity implements View.OnClickListen
             e.printStackTrace();
         }
         Log.e(TAG, "加密后密码：" + sign_pwd);
-        XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL,handler);
+        XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL);
         if (type == 1) {//注册
             String registSign = aesAccount + METHOD_REGISTER + sign_pwd + URLUtils.MD5_SIGN;
             String sign = MD5Utils.MD5Encode(registSign, "");
@@ -385,14 +325,101 @@ public class RegisterActivity extends BaseActivity implements View.OnClickListen
             xutil.add("password",sign_pwd);
             xutil.add("method",METHOD_REGISTER);
             xutil.add("sign",sign);
-            xutil.sendPost(4,RegisterActivity.this);
+           // xutil.sendPost(4,RegisterActivity.this);
+            xutil.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String registResult) {
+                    try {
+                        JSONObject regJson = new JSONObject(registResult);
+                        int status = regJson.getInt("status");
+                        if (status == 9999) {//注册成功
+                            Toast.makeText(RegisterActivity.this, "注册成功", Toast.LENGTH_LONG).show();
+                            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                            startActivity(intent);
+                        } else if (status == 0003) {//帐号已存在
+                            registerTiShi_rll.setVisibility(View.VISIBLE);
+                        } else {
+                            Log.e(TAG, regJson.getString("error"));
+                            Toast.makeText(RegisterActivity.this, regJson.getString("error"), Toast.LENGTH_LONG).show();
+
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } else if (type == 2) {//忘记密码
             String sign = MD5Utils.MD5Encode(aesAccount + METHOD_FORGETPASSWORD + sign_pwd + URLUtils.MD5_SIGN, "");
             xutil.add("account",aesAccount);
             xutil.add("password",sign_pwd);
             xutil.add("method",METHOD_FORGETPASSWORD);
             xutil.add("sign",sign);
-            xutil.sendPost(3,RegisterActivity.this);
+           // xutil.sendPost(3,RegisterActivity.this);
+            xutil.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String forgetPwdResult) {
+                    try {
+                        JSONObject json = new JSONObject(forgetPwdResult);
+                        if (json.getInt("status") == 9999) {
+                               /* Utils.showDialogTwo(RegisterActivity.this, "密码重置成功,请重新登陆", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                        startActivity(intent);
+                                    }
+                                });*/
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(RegisterActivity.this);
+                            View view = View.inflate(RegisterActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("密码重置成功,请重新登陆");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                    startActivity(intent);
+                                }
+                            });
+                            builder.create().show();
+                        } else {
+                            Toast.makeText(RegisterActivity.this, json.getString("error"), Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         }
     }
 
@@ -405,30 +432,4 @@ public class RegisterActivity extends BaseActivity implements View.OnClickListen
         }
         return super.onKeyDown(keyCode, event);
     }
-    public static void showDialogTwo(Context context, String content, View.OnClickListener listener){
-        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        View view = View.inflate(context, R.layout.dialog_textview, null);
-        TextView title = (TextView) view.findViewById(R.id.textView1);
-        Button button = (Button) view.findViewById(R.id.button1);
-        title.setText(content);
-        builder.setView(view);
-        button.setOnClickListener(listener);
-        builder.create().show();
-    }
-    /* *//**
-     * 校验帐号
-     *//*
-    private void checkAccount(String account){
-        try {
-            String aesAccount = AESOperator.encrypt(phoneNum, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + "CheckAccount" + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL, handler);
-            xutilsHelper.add("account",aesAccount);
-            xutilsHelper.add("method", "CheckAccount");
-            xutilsHelper.add("sign",sign);
-            xutilsHelper.sendPost(5, this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }*/
 }

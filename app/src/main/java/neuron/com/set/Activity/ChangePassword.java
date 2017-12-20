@@ -2,8 +2,6 @@ package neuron.com.set.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -16,6 +14,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.R;
@@ -46,72 +45,7 @@ public class ChangePassword extends BaseActivity implements View.OnClickListener
 
     private String CHANGEPASSWORD = "ChangePassword";
 
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int agr1 = msg.arg1;
-            switch (agr1) {
-                case 1://检测帐号可用性
-                    if (msg.what == 102) {
-                        String checkAccountResult = (String) msg.obj;
-                        Log.e(TAG + "检测帐号可用性", checkAccountResult);
-                        try {
-                            JSONObject json = new JSONObject(checkAccountResult);
-                            int status = json.getInt("status");
-                            if (status == 9999) {//验证成功
-                                String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-                                Log.e(TAG + "新旧密码", newPassword + oldPassword);
-                                String aesOldPassword = AESOperator.encrypt(MD5Utils.MD5Encode(oldPassword + URLUtils.MD5_SIGN, ""), URLUtils.AES_SIGN);
-                                String aesNewPassword = AESOperator.encrypt(MD5Utils.MD5Encode(newPassword + URLUtils.MD5_SIGN, ""), URLUtils.AES_SIGN);
-                                String sign = MD5Utils.MD5Encode(aesAccount + CHANGEPASSWORD + aesNewPassword + aesOldPassword + URLUtils.MD5_SIGN, "");
-                                XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL, handler);
-                                xutil.add("account", aesAccount);
-                                xutil.add("old_password", aesOldPassword);
-                                xutil.add("new_password", aesNewPassword);
-                                xutil.add("method", CHANGEPASSWORD);
-                                xutil.add("sign", sign);
-                                xutil.sendPost(2, ChangePassword.this);
 
-                            } else {
-                                Toast.makeText(ChangePassword.this, "验证帐号失败", Toast.LENGTH_LONG).show();
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Toast.makeText(ChangePassword.this, (String) msg.obj, Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 2://修改密码
-                    if (msg.what == 102) {
-                        String changePwdResult = (String) msg.obj;
-                        Log.e(TAG + "修改密码", changePwdResult);
-                        try {
-                            JSONObject json = new JSONObject(changePwdResult);
-                            int status = json.getInt("status");
-                            if (status == 9999) {
-                                Toast.makeText(ChangePassword.this, "修改成功", Toast.LENGTH_LONG).show();
-                                Intent intent = new Intent(ChangePassword.this, LoginActivity.class);
-                                startActivity(intent);
-                            } else {
-                                Toast.makeText(ChangePassword.this, json.getString("error"), Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Toast.makeText(ChangePassword.this, (String) msg.obj, Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -176,11 +110,90 @@ public class ChangePassword extends BaseActivity implements View.OnClickListener
                                 try {
                                     String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
                                     String sign = MD5Utils.MD5Encode(aesAccount + CHECKACCOUNT + URLUtils.MD5_SIGN, "");
-                                    XutilsHelper xutils = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+                                    XutilsHelper xutils = new XutilsHelper(URLUtils.USERNAME_URL);
                                     xutils.add("account", aesAccount);
                                     xutils.add("method", CHECKACCOUNT);
                                     xutils.add("sign", sign);
-                                    xutils.sendPost(1, this);
+                                    xutils.sendPost2(new Callback.CommonCallback<String>() {
+                                        @Override
+                                        public void onSuccess(String checkAccountResult) {
+                                            Log.e(TAG + "检测帐号可用性", checkAccountResult);
+                                            try {
+                                                JSONObject json = new JSONObject(checkAccountResult);
+                                                int status = json.getInt("status");
+                                                if (status == 9999) {//验证成功
+                                                    String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
+                                                    Log.e(TAG + "新旧密码", newPassword + oldPassword);
+                                                    String aesOldPassword = AESOperator.encrypt(MD5Utils.MD5Encode(oldPassword + URLUtils.MD5_SIGN, ""), URLUtils.AES_SIGN);
+                                                    String aesNewPassword = AESOperator.encrypt(MD5Utils.MD5Encode(newPassword + URLUtils.MD5_SIGN, ""), URLUtils.AES_SIGN);
+                                                    String sign = MD5Utils.MD5Encode(aesAccount + CHANGEPASSWORD + aesNewPassword + aesOldPassword + URLUtils.MD5_SIGN, "");
+                                                    XutilsHelper xutil = new XutilsHelper(URLUtils.USERNAME_URL);
+                                                    xutil.add("account", aesAccount);
+                                                    xutil.add("old_password", aesOldPassword);
+                                                    xutil.add("new_password", aesNewPassword);
+                                                    xutil.add("method", CHANGEPASSWORD);
+                                                    xutil.add("sign", sign);
+                                                    xutil.sendPost2(new CommonCallback<String>() {
+                                                        @Override
+                                                        public void onSuccess(String changePwdResult) {
+                                                            Log.e(TAG + "修改密码", changePwdResult);
+                                                            try {
+                                                                JSONObject json = new JSONObject(changePwdResult);
+                                                                int status = json.getInt("status");
+                                                                if (status == 9999) {
+                                                                    Toast.makeText(ChangePassword.this, "修改成功", Toast.LENGTH_LONG).show();
+                                                                    Intent intent = new Intent(ChangePassword.this, LoginActivity.class);
+                                                                    startActivity(intent);
+                                                                } else {
+                                                                    Toast.makeText(ChangePassword.this, json.getString("error"), Toast.LENGTH_LONG).show();
+                                                                }
+                                                            } catch (JSONException e) {
+                                                                e.printStackTrace();
+                                                            }
+                                                        }
+
+                                                        @Override
+                                                        public void onError(Throwable throwable, boolean b) {
+                                                            Toast.makeText(ChangePassword.this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+                                                        }
+
+                                                        @Override
+                                                        public void onCancelled(CancelledException e) {
+
+                                                        }
+
+                                                        @Override
+                                                        public void onFinished() {
+
+                                                        }
+                                                    });
+
+                                                } else {
+                                                    Toast.makeText(ChangePassword.this, "验证帐号失败", Toast.LENGTH_LONG).show();
+                                                }
+
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onError(Throwable throwable, boolean b) {
+
+                                        }
+
+                                        @Override
+                                        public void onCancelled(CancelledException e) {
+
+                                        }
+
+                                        @Override
+                                        public void onFinished() {
+
+                                        }
+                                    });
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }

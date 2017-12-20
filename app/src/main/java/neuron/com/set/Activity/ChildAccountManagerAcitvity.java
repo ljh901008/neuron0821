@@ -3,8 +3,6 @@ package neuron.com.set.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -23,6 +21,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,70 +60,7 @@ public class ChildAccountManagerAcitvity extends BaseActivity implements View.On
     private String account, token,engine_id;
     private String share_method = "ShowSharedAccounts";
     private String recycle_method = "RecycleSharedAccounts";
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://分享帐号列表
-                    if (msg.what == 102) {
-                        String shareAccountListResult = (String) msg.obj;
-                        Log.e(TAG + "分享帐号列表", shareAccountListResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(shareAccountListResult);
-                            JSONArray msgJson = jsonObject.getJSONArray("msg");
-                            int length = msgJson.length();
-                            if (length > 0) {
-                                listBean = new ArrayList<AccountDataBean>();
-                                AccountDataBean bean;
-                                for (int i = 0; i < length; i++) {
-                                    bean = new AccountDataBean();
-                                    JSONObject jsonBean = msgJson.getJSONObject(i);
-                                    bean.setAccoungNumber(jsonBean.getString("account"));
-                                    bean.setUserName(jsonBean.getString("username"));
-                                    JSONObject pathJson = jsonBean.getJSONObject("photo_path");
-                                    bean.setPhotoPath(pathJson.getString("Android"));
-                                    Log.e(TAG + "头像路径", pathJson.getString("Android"));
-                                    bean.setEdit(true);
-                                    bean.setSelect(false);
-                                    bean.setShow(true);
-                                    listBean.add(bean);
-                                }
-                                adapter = new ChildAccountManagerAdapter(listBean, ChildAccountManagerAcitvity.this);
-                                listView.setAdapter(adapter);
-                            } else {
-                                tishi.setVisibility(View.VISIBLE);
-                                tishi.setText("您没有分享控制主机");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                    }
-                    break;
-                case 2://删除帐号
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "删除", deleteResult);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(deleteResult);
-                            if (jsonDelete.getInt("status") == 9999) {
-                                adapter.notifyDataSetChanged();
-                                Toast.makeText(ChildAccountManagerAcitvity.this, "删除成功",Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(ChildAccountManagerAcitvity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -264,13 +200,62 @@ public class ChildAccountManagerAcitvity extends BaseActivity implements View.On
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + share_method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engine_id);
             xutilsHelper.add("method", share_method);
             xutilsHelper.add("token", token);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String shareAccountListResult) {
+                    Log.e(TAG + "分享帐号列表", shareAccountListResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(shareAccountListResult);
+                        JSONArray msgJson = jsonObject.getJSONArray("msg");
+                        int length = msgJson.length();
+                        if (length > 0) {
+                            listBean = new ArrayList<AccountDataBean>();
+                            AccountDataBean bean;
+                            for (int i = 0; i < length; i++) {
+                                bean = new AccountDataBean();
+                                JSONObject jsonBean = msgJson.getJSONObject(i);
+                                bean.setAccoungNumber(jsonBean.getString("account"));
+                                bean.setUserName(jsonBean.getString("username"));
+                                JSONObject pathJson = jsonBean.getJSONObject("photo_path");
+                                bean.setPhotoPath(pathJson.getString("Android"));
+                                Log.e(TAG + "头像路径", pathJson.getString("Android"));
+                                bean.setEdit(true);
+                                bean.setSelect(false);
+                                bean.setShow(true);
+                                listBean.add(bean);
+                            }
+                            adapter = new ChildAccountManagerAdapter(listBean, ChildAccountManagerAcitvity.this);
+                            listView.setAdapter(adapter);
+                        } else {
+                            tishi.setVisibility(View.VISIBLE);
+                            tishi.setText("您没有分享控制主机");
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -293,14 +278,45 @@ public class ChildAccountManagerAcitvity extends BaseActivity implements View.On
                 }
             }
             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + recycle_method + js.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engine_id);
             xutilsHelper.add("method", recycle_method);
             xutilsHelper.add("msg", js.toString());
             xutilsHelper.add("token", token);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Log.e(TAG + "删除", deleteResult);
+                    try {
+                        JSONObject jsonDelete = new JSONObject(deleteResult);
+                        if (jsonDelete.getInt("status") == 9999) {
+                            adapter.notifyDataSetChanged();
+                            Toast.makeText(ChildAccountManagerAcitvity.this, "删除成功",Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(ChildAccountManagerAcitvity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

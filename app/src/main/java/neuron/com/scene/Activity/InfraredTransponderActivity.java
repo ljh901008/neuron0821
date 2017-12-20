@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -18,6 +16,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
@@ -27,6 +26,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,109 +66,7 @@ public class InfraredTransponderActivity extends BaseActivity implements View.On
     private InfraredTransponderAdapter adapter;
     private boolean isPush = true;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://详情
-                    if (msg.what == 102) {
-                        String infraredResult = (String) msg.obj;
-                        Log.e(TAG + "红外转发器详情", infraredResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(infraredResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject jsonMsg = jsonObject.getJSONObject("msg");
-                                neuronId = jsonMsg.getString("neuron_id");
-                                deviceName = jsonMsg.getString("neuron_name");
-                                deviceName_ed.setText(deviceName);
-                                roomId = jsonMsg.getString("room_id");
-                                roomName = jsonMsg.getString("room_name");
-                                room_tv.setText(roomName);
-                                deviceType = jsonMsg.getString("device_type_id");
-                                JSONArray conJsa = jsonMsg.getJSONArray("controlled_device_list");
-                                int length = conJsa.length();
-                                if (length > 0) {
-                                    list = new ArrayList<DeviceSetFragmentBean>();
-                                    DeviceSetFragmentBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject json = conJsa.getJSONObject(i);
-                                        bean = new DeviceSetFragmentBean();
-                                        bean.setDeviceName(json.getString("controlled_device_name"));
-                                        bean.setNeuronId(json.getString("controlled_device_id"));
-                                        bean.setSite(json.getString("controlled_device_site"));
-                                        list.add(bean);
-                                    }
-                                    Log.e(TAG + "遥控器数据长度", String.valueOf(list.size()));
-                                    if (adapter == null) {
-                                        adapter = new InfraredTransponderAdapter(InfraredTransponderActivity.this, list);
-                                        listView.setAdapter(adapter);
-                                    } else {
-                                        adapter.setList(list);
-                                        adapter.notifyDataSetChanged();
-                                    }
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    Utils.dismissWaitDialog(mWaitDialog);
-                    break;
-                case 2://删除电视空调
-                    if (msg.what == 102) {
-                        try {
-                            String deleteResult = (String) msg.obj;
-                            Log.e(TAG + "删除电视空调", deleteResult);
-                            Utils.dismissWaitDialog(mWaitDialog);
-                            JSONObject json = new JSONObject(deleteResult);
-                            if (json.getInt("status") == 9999) {
-                                final AlertDialog builder = new AlertDialog.Builder(InfraredTransponderActivity.this).create();
-                                View view = View.inflate(InfraredTransponderActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("删除成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        adapter.notifyDataSetChanged();
-                                        builder.dismiss();
-                                    }
-                                });
-                                builder.show();
-                            } else {
-                                Utils.showDialog(InfraredTransponderActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                case 3://修改名称和房间
-                    if (msg.what == 102) {
-                        try {
-                            String deleteResult = (String) msg.obj;
-                            Log.e(TAG + "修改红外转发名称和房间", deleteResult);
-                            JSONObject json = new JSONObject(deleteResult);
-                            if (json.getInt("status") == 9999) {
-                                Utils.showDialog(InfraredTransponderActivity.this,"修改成功");
-                            } else {
-                                Utils.showDialog(InfraredTransponderActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -313,14 +211,73 @@ public class InfraredTransponderActivity extends BaseActivity implements View.On
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + swichDataMethod + neuronId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", swichDataMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String infraredResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "红外转发器详情", infraredResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(infraredResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject jsonMsg = jsonObject.getJSONObject("msg");
+                            neuronId = jsonMsg.getString("neuron_id");
+                            deviceName = jsonMsg.getString("neuron_name");
+                            deviceName_ed.setText(deviceName);
+                            roomId = jsonMsg.getString("room_id");
+                            roomName = jsonMsg.getString("room_name");
+                            room_tv.setText(roomName);
+                            deviceType = jsonMsg.getString("device_type_id");
+                            JSONArray conJsa = jsonMsg.getJSONArray("controlled_device_list");
+                            int length = conJsa.length();
+                            if (length > 0) {
+                                list = new ArrayList<DeviceSetFragmentBean>();
+                                DeviceSetFragmentBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject json = conJsa.getJSONObject(i);
+                                    bean = new DeviceSetFragmentBean();
+                                    bean.setDeviceName(json.getString("controlled_device_name"));
+                                    bean.setNeuronId(json.getString("controlled_device_id"));
+                                    bean.setSite(json.getString("controlled_device_site"));
+                                    list.add(bean);
+                                }
+                                Log.e(TAG + "遥控器数据长度", String.valueOf(list.size()));
+                                if (adapter == null) {
+                                    adapter = new InfraredTransponderAdapter(InfraredTransponderActivity.this, list);
+                                    listView.setAdapter(adapter);
+                                } else {
+                                    adapter.setList(list);
+                                    adapter.notifyDataSetChanged();
+                                }
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(InfraredTransponderActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -348,7 +305,7 @@ public class InfraredTransponderActivity extends BaseActivity implements View.On
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             Log.e(TAG + "删除电视/空调", aesAccount + "," + devicesite + "," + engineId + "," + methodDeleteScene + "," + neuronId + "," + token);
             String sign = MD5Utils.MD5Encode(aesAccount + devicesite +engineId + methodDeleteScene + neuronId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -356,7 +313,51 @@ public class InfraredTransponderActivity extends BaseActivity implements View.On
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodDeleteScene);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    try {
+                        Log.e(TAG + "删除电视空调", deleteResult);
+                        Utils.dismissWaitDialog(mWaitDialog);
+                        JSONObject json = new JSONObject(deleteResult);
+                        if (json.getInt("status") == 9999) {
+                            final AlertDialog builder = new AlertDialog.Builder(InfraredTransponderActivity.this).create();
+                            View view = View.inflate(InfraredTransponderActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("删除成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    adapter.notifyDataSetChanged();
+                                    builder.dismiss();
+                                }
+                            });
+                            builder.show();
+                        } else {
+                            Utils.showDialog(InfraredTransponderActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -396,14 +397,44 @@ public class InfraredTransponderActivity extends BaseActivity implements View.On
             jsonObject.put("device_name", deviceName);
             jsonObject.put("room_id", roomId);
             String sign = MD5Utils.MD5Encode(aesAccount + jsonObject.toString() + engineId + updateMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("device", jsonObject.toString());
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", updateMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(3, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    try {
+                        Log.e(TAG + "修改红外转发名称和房间", deleteResult);
+                        JSONObject json = new JSONObject(deleteResult);
+                        if (json.getInt("status") == 9999) {
+                            Utils.showDialog(InfraredTransponderActivity.this,"修改成功");
+                        } else {
+                            Utils.showDialog(InfraredTransponderActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -2,8 +2,6 @@ package neuron.com.scene.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -18,6 +16,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.MainActivity;
@@ -43,39 +42,7 @@ public class AddSceneActivity extends BaseActivity implements View.OnClickListen
     private SharedPreferencesManager sharedPreferencesManager;
     private String neuronId,account,token,engineId;
     private String addShareMethod = "AddContextualModel";
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        try {
-                            String result = (String) msg.obj;
-                            Log.e(TAG + "result", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
-                                Toast.makeText(AddSceneActivity.this, "添加成功", Toast.LENGTH_LONG).show();
-                                JSONObject jsmsg = json.getJSONObject("msg");
-                                String sceneId = jsmsg.getString("contextual_model_id");
-                                Intent intent = new Intent(AddSceneActivity.this, SceneEditActivity.class);
-                                intent.putExtra("tag", 1);
-                                intent.putExtra("sceneId", sceneId);
-                                startActivity(intent);
-                            } else {
-                                Utils.showDialog(AddSceneActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     private String sceneImg,sceneName;
     private int simg;
     @Override
@@ -125,7 +92,7 @@ public class AddSceneActivity extends BaseActivity implements View.OnClickListen
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneImg + sceneName + desc + engineId + addShareMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("contextual_model_name", sceneName);
@@ -134,7 +101,43 @@ public class AddSceneActivity extends BaseActivity implements View.OnClickListen
             xutils.add("token", token);
             xutils.add("method", addShareMethod);
             xutils.add("sign", sign);
-            xutils.sendPost(1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    try {
+                        Log.e(TAG + "result", result);
+                        JSONObject json = new JSONObject(result);
+                        if (json.getInt("status") == 9999) {
+                            Toast.makeText(AddSceneActivity.this, "添加成功", Toast.LENGTH_LONG).show();
+                            JSONObject jsmsg = json.getJSONObject("msg");
+                            String sceneId = jsmsg.getString("contextual_model_id");
+                            Intent intent = new Intent(AddSceneActivity.this, SceneEditActivity.class);
+                            intent.putExtra("tag", 1);
+                            intent.putExtra("sceneId", sceneId);
+                            startActivity(intent);
+                        } else {
+                            Utils.showDialog(AddSceneActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

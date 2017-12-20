@@ -7,8 +7,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
@@ -27,6 +25,7 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.io.File;
 
@@ -82,51 +81,7 @@ public class MeFragment extends Fragment implements View.OnClickListener{
             .fromFile(new File(Environment.getExternalStorageDirectory() + "/", "pic.jpg"));
     private String photoPath = null;
     private String str;//昵称
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-           switch(arg1){
-               case 1:
-                   if (msg.what == 102) {
-                       String changePhotoResult = (String) msg.obj;
-                       try {
-                           JSONObject jsonObject = new JSONObject(changePhotoResult);
-                           if (jsonObject.getInt("status") == 9999) {
-                               Toast.makeText(getActivity(), "修改头像成功",Toast.LENGTH_LONG).show();
-                           } else {
-                               Toast.makeText(getActivity(), jsonObject.getString("error"),Toast.LENGTH_LONG).show();
-                           }
-                       } catch (JSONException e) {
-                           e.printStackTrace();
-                       }
-                   }
-                    break;
-               case 2:
-                   if (msg.what == 102) {
-                       String result = (String) msg.obj;
-                       Log.e("修改昵称", result);
-                       try {
-                           JSONObject jsonObject = new JSONObject(result);
-                           if (jsonObject.getInt("status") == 9999) {
-                               Toast.makeText(getActivity(), "修改成功", Toast.LENGTH_SHORT).show();
-                               userName_tv.setText("昵称:" + str);
-                               sharedPreferencesManager.save("username", str);
-                           } else {
-                               Toast.makeText(getActivity(), jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
-                           }
-                       } catch (JSONException e) {
-                           e.printStackTrace();
-                       }
-                   }
 
-                   break;
-               default:
-                    break;
-           }
-        }
-    };
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -346,13 +301,43 @@ public class MeFragment extends Fragment implements View.OnClickListener{
             try {
                 String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
                 String sign = MD5Utils.MD5Encode(aesAccount + changePhoto + base64 + token + URLUtils.MD5_SIGN, "");
-                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+                XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL);
                 xutilsHelper.add("account", aesAccount);
                 xutilsHelper.add("photo", base64);
                 xutilsHelper.add("token", token);
                 xutilsHelper.add("method", changePhoto);
                 xutilsHelper.add("sign", sign);
-                xutilsHelper.sendPost(1, getActivity());
+                //xutilsHelper.sendPost(1, getActivity());
+                xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                    @Override
+                    public void onSuccess(String changePhotoResult) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(changePhotoResult);
+                            if (jsonObject.getInt("status") == 9999) {
+                                Toast.makeText(getActivity(), "修改头像成功",Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(getActivity(), jsonObject.getString("error"),Toast.LENGTH_LONG).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable, boolean b) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(CancelledException e) {
+
+                    }
+
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -376,13 +361,46 @@ public class MeFragment extends Fragment implements View.OnClickListener{
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + method + token + userName + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.USERNAME_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.USERNAME_URL);
             xutils.add("account", aesAccount);
             xutils.add("username", userName);
             xutils.add("token", token);
             xutils.add("method", method);
             xutils.add("sign", sign);
-            xutils.sendPost(2, getActivity());
+            //xutils.sendPost(2, getActivity());
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    Log.e("修改昵称", result);
+                    try {
+                        JSONObject jsonObject = new JSONObject(result);
+                        if (jsonObject.getInt("status") == 9999) {
+                            Toast.makeText(getActivity(), "修改成功", Toast.LENGTH_SHORT).show();
+                            userName_tv.setText("昵称:" + str);
+                            sharedPreferencesManager.save("username", str);
+                        } else {
+                            Toast.makeText(getActivity(), jsonObject.getString("error"), Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

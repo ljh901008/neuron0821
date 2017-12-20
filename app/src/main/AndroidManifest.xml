@@ -41,7 +41,7 @@
     <application
         android:name="neuron.com.app.OgeApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/start_icon120"
+        android:icon="@mipmap/start_icontest"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
@@ -80,7 +80,8 @@
         <!-- 修改密码-->
         <activity android:name="neuron.com.set.Activity.ChangePassword"></activity>
         <!--扫描页面-->
-        <activity android:name="com.karics.library.zxing.android.CaptureActivity"></activity>
+        <activity android:name="com.karics.library.zxing.android.CaptureActivity"
+            android:screenOrientation="portrait"></activity>
         <!--添加设备页面-->
         <activity android:name="neuron.com.room.Activity.AddDeviceActivity"></activity>
         <!--手动添加页面-->
@@ -99,7 +100,6 @@
         <!--空气质量检测仪场景设定页面-->
         <activity android:name="neuron.com.room.Activity.AirQualitySelectSceneActivity"/>
         <!-- 绑定设置页面 -->
-        <activity android:name="neuron.com.room.Activity.BindSetActivity"></activity>
         <!--开通萤石云服务页面-->
         <activity android:name="neuron.com.room.Activity.EZ_OpenServiceActivity"/>
         <!--萤石扫面添加结果页面-->
@@ -117,7 +117,6 @@
             android:launchMode="singleTop"/>
 
         <!-- 摄像头列表页面 暂时使用 -->
-        <activity android:name="neuron.com.room.Activity.EZ_CameraListActivity"/>
 
         <!--控制主机管理页面-->
         <activity android:name="neuron.com.set.Activity.HostManagerActivity"/>
@@ -319,7 +318,7 @@
         <!-- 目前这个渠道统计功能的报表还未开放。-->
         <meta-data android:name="JPUSH_CHANNEL" android:value="developer-default"/>
         <!--  </>值来自开发者平台取得的AppKey-->
-        <meta-data android:name="JPUSH_APPKEY" android:value="4b889b82a72157186ae4817e"/>
+        <meta-data android:name="JPUSH_APPKEY" android:value="d4a21a023b4b4ba9526642ff"/>
         <!--乐固多渠道打包使用-->
         <meta-data android:name="Neuron" android:value="1"></meta-data>
     </application>

@@ -27,6 +27,7 @@ import com.handmark.pulltorefresh.library.PullToRefreshScrollView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,54 +69,14 @@ public class SceneSetFragment extends Fragment implements AdapterView.OnItemClic
                 case 1://场景列表
                     if (msg.what == 102) {
                         String scenelistResult = (String) msg.obj;
-                        try {
-                            JSONObject jsonObject = new JSONObject(scenelistResult);
-                            int status = jsonObject.getInt("status");
-                            if (status == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("contextual_model_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<AirQualityBean>();
-                                    AirQualityBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject sceneJson = jsonArray.getJSONObject(i);
-                                        bean = new AirQualityBean();
-                                        bean.setSceneName(sceneJson.getString("contextual_model_name"));
-                                        bean.setSceneId(sceneJson.getString("contextual_model_id"));
-                                        bean.setSceneType(sceneJson.getString("contextual_model_type"));
-                                        bean.setSceneImg(sceneJson.getString("contextual_model_img"));
-                                        list.add(bean);
-                                    }
-                                    adapter = new SceneSetAdapter(getActivity(), list);
-                                    listView.setAdapter(adapter);
-                                }
-                            }else if (status == 1000 || status == 1001) {
-                                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                                startActivity(intent);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+
 
                     }
                     break;
                 case 2://删除场景
                     if (msg.what == 102) {
                         String updateResult = (String) msg.obj;
-                        Log.e("删除场景", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(getActivity(),jsonObject.getString("error"));
-                            } else {
-                                Utils.showDialog(getActivity(),"操作成功");
-                                list.remove(mIndex);
-                                adapter.setList(list);
-                                adapter.notifyDataSetChanged();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+
                     }
                     break;
                 default:
@@ -225,13 +186,61 @@ public class SceneSetFragment extends Fragment implements AdapterView.OnItemClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + methodSceneList + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("token", token);
             xutils.add("method", methodSceneList);
             xutils.add("sign", sign);
-            xutils.sendPost(1, getActivity());
+            //xutils.sendPost(1, getActivity());
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String scenelistResult) {
+                    try {
+                        JSONObject jsonObject = new JSONObject(scenelistResult);
+                        int status = jsonObject.getInt("status");
+                        if (status == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("contextual_model_list");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                list = new ArrayList<AirQualityBean>();
+                                AirQualityBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject sceneJson = jsonArray.getJSONObject(i);
+                                    bean = new AirQualityBean();
+                                    bean.setSceneName(sceneJson.getString("contextual_model_name"));
+                                    bean.setSceneId(sceneJson.getString("contextual_model_id"));
+                                    bean.setSceneType(sceneJson.getString("contextual_model_type"));
+                                    bean.setSceneImg(sceneJson.getString("contextual_model_img"));
+                                    list.add(bean);
+                                }
+                                adapter = new SceneSetAdapter(getActivity(), list);
+                                listView.setAdapter(adapter);
+                            }
+                        }else if (status == 1000 || status == 1001) {
+                            Intent intent = new Intent(getActivity(), LoginActivity.class);
+                            startActivity(intent);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -247,14 +256,48 @@ public class SceneSetFragment extends Fragment implements AdapterView.OnItemClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("contextual_model_id", sceneId);
             xutils.add("token", token);
             xutils.add("method", method);
             xutils.add("sign", sign);
-            xutils.sendPost(2, getActivity());
+            //xutils.sendPost(2, getActivity());
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String updateResult) {
+                    Log.e("删除场景", updateResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(updateResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(getActivity(),jsonObject.getString("error"));
+                        } else {
+                            Utils.showDialog(getActivity(),"操作成功");
+                            list.remove(mIndex);
+                            adapter.setList(list);
+                            adapter.notifyDataSetChanged();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -377,7 +377,7 @@ public class Utils {
         xutilsHelper.add("token", token);
         xutilsHelper.add("method", method);
         xutilsHelper.add("sign", sign);
-        xutilsHelper.sendPost(order,context);
+       // xutilsHelper.sendPost2(order,context);
 
     }
 

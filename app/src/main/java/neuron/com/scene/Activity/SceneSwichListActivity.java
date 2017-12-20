@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -22,6 +20,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,39 +55,7 @@ public class SceneSwichListActivity extends BaseActivity implements View.OnClick
     private int indexing = 500;
     private TextView warning_tv,title;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 3://删除绑定
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            String deleteResult = (String) msg.obj;
-                            Log.e(TAG + "删除开关", deleteResult);
-                            JSONObject json = new JSONObject(deleteResult);
-                            if (json.getInt("status") == 9999) {
-                                Utils.showDialog(SceneSwichListActivity.this, "删除成功");
-                                list.remove(indexing);
-                                adapter.setList(list);
-                                adapter.notifyDataSetChanged();
-                            } else {
-                                Utils.showDialog(SceneSwichListActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,7 +99,7 @@ public class SceneSwichListActivity extends BaseActivity implements View.OnClick
             public void onMenuItemClick(int position, SwipeMenu menu, int index) {
                 switch(index){
                     case 0:
-                        delSwich(list.get(position).getSwichId(),list.get(position).getSwichKeyId(),deleteSwichMethod,3);
+                        delSwich(list.get(position).getSwichId(),list.get(position).getSwichKeyId(),deleteSwichMethod);
                         indexing = position;
                         break;
                     default:
@@ -269,9 +236,9 @@ public class SceneSwichListActivity extends BaseActivity implements View.OnClick
      * @param neuronId   节点设备Id
      * @param swichKeyId  开关键位
      * @param Method  方法名
-     * @param arg1
+     *
      */
-    private void delSwich(String neuronId,String swichKeyId,String Method,int arg1){
+    private void delSwich(String neuronId,String swichKeyId,String Method){
         setAccount();
         Utils.showWaitDialog("加载中", SceneSwichListActivity.this, mWaitDialog);
         try {
@@ -282,14 +249,48 @@ public class SceneSwichListActivity extends BaseActivity implements View.OnClick
             jsonObject.put("key_id", swichKeyId);
             Log.e(TAG + "删除开关", jsonObject.toString());
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + Method + jsonObject.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("msg", jsonObject.toString());
             xutils.add("token", token);
             xutils.add("method", Method);
             xutils.add("sign", sign);
-            xutils.sendPost(arg1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        Log.e(TAG + "删除开关", deleteResult);
+                        JSONObject json = new JSONObject(deleteResult);
+                        if (json.getInt("status") == 9999) {
+                            Utils.showDialog(SceneSwichListActivity.this, "删除成功");
+                            list.remove(indexing);
+                            adapter.setList(list);
+                            adapter.notifyDataSetChanged();
+                        } else {
+                            Utils.showDialog(SceneSwichListActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

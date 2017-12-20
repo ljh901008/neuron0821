@@ -21,10 +21,6 @@ import org.json.JSONObject;
 import neuron.com.app.OgeApplication;
 import neuron.com.database.SharedPreferencesManager;
 import neuron.com.login.Activity.LoginActivity;
-import neuron.com.util.AESOperator;
-import neuron.com.util.MD5Utils;
-import neuron.com.util.URLUtils;
-import neuron.com.util.XutilsHelper;
 
 /**
  *
@@ -108,28 +104,7 @@ public class BaseActivity extends AppCompatActivity{
             }
         }
     };
-    /**
-     *    校验token可用性
-     * @param token
-     * @param method
-     */
-    private void detectionToken(String token,String method){
-        if (sfManager.has("account")) {
-            account = sfManager.get("account");
-        }
-        try {
-            String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.USERNAME_URL, handler);
-            xutilsHelper.add("account", aesAccount);
-            xutilsHelper.add("token", token);
-            xutilsHelper.add("method", method);
-            xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+
 
     @Override
     protected void onPause() {

@@ -5,8 +5,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -22,6 +20,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,90 +59,7 @@ public class ShareHostManagerListActivity extends BaseActivity implements OnClic
     private int type = 1;//子帐号设置控制主机的标记
     private String accountc;//子帐号
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://控制主机列表
-                    if (msg.what == 102) {
-                        String hostManagerListResult = (String) msg.obj;
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Log.e(TAG + "控制主机列表",hostManagerListResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(hostManagerListResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<HostManagerItemBean>();
-                                    HostManagerItemBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        bean = new HostManagerItemBean();
-                                        JSONObject json = jsonArray.getJSONObject(i);
-                                        //  Log.e(TAG + "控制主机名称",s);
-                                        bean.setHostManagerName(json.getString("engine_name"));
-                                        bean.setEngineId(json.getString("engine_id"));
-                                        //   Log.e(TAG + "控制主机Id",json.getString("engine_id"));
-                                        //bean.setHostSerialNumber(json.getString("serial_number"));
-                                        // Log.e(TAG + "控制主机序列号",json.getString("serial_number"));
-                                        //bean.setHostState(json.getInt("_default"));
-                                        if (type == 2) {//子帐号不显示文字
-                                            bean.setIsVisible(0);
-                                        } else {
-                                            bean.setIsVisible(1);
-                                        }
-                                        list.add(bean);
-                                    }
-                                    Log.e(TAG + "列表长度", String.valueOf(list.size()));
-                                    adapter = new HostManageAdapter(list, ShareHostManagerListActivity.this);
-                                    listView.setAdapter(adapter);
-                                }
-                            } else {
-                                Utils.dismissWaitDialog(mWaitDialog);
-                                Log.e(TAG + "error", jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://生成分享码
-                    if (msg.what == 102) {
-                        String shareCodeREsult = (String) msg.obj;
-                        try {
-                            JSONObject jsonShareCode = new JSONObject(shareCodeREsult);
-                            if (jsonShareCode.getInt("status") == 9999) {
-                                makeShareDialog(ShareHostManagerListActivity.this, jsonShareCode.getString("share_code"));
-                            } else {
-                                Toast.makeText(ShareHostManagerListActivity.this, jsonShareCode.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 3://子帐号设定控制主机
-                    if (msg.what == 102) {
-                        String shareCodeREsult = (String) msg.obj;
-                        try {
-                            JSONObject jsonShareCode = new JSONObject(shareCodeREsult);
-                            if (jsonShareCode.getInt("status") == 9999) {
-                                Utils.showDialog(ShareHostManagerListActivity.this, "设置成功！");
-                            } else {
-                                Toast.makeText(ShareHostManagerListActivity.this, jsonShareCode.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -208,12 +124,69 @@ public class ShareHostManagerListActivity extends BaseActivity implements OnClic
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String hostManagerListResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "控制主机列表",hostManagerListResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(hostManagerListResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                list = new ArrayList<HostManagerItemBean>();
+                                HostManagerItemBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    bean = new HostManagerItemBean();
+                                    JSONObject json = jsonArray.getJSONObject(i);
+                                    //  Log.e(TAG + "控制主机名称",s);
+                                    bean.setHostManagerName(json.getString("engine_name"));
+                                    bean.setEngineId(json.getString("engine_id"));
+                                    //   Log.e(TAG + "控制主机Id",json.getString("engine_id"));
+                                    //bean.setHostSerialNumber(json.getString("serial_number"));
+                                    // Log.e(TAG + "控制主机序列号",json.getString("serial_number"));
+                                    //bean.setHostState(json.getInt("_default"));
+                                    if (type == 2) {//子帐号不显示文字
+                                        bean.setIsVisible(0);
+                                    } else {
+                                        bean.setIsVisible(1);
+                                    }
+                                    list.add(bean);
+                                }
+                                Log.e(TAG + "列表长度", String.valueOf(list.size()));
+                                adapter = new HostManageAdapter(list, ShareHostManagerListActivity.this);
+                                listView.setAdapter(adapter);
+                            }
+                        } else {
+                            Utils.dismissWaitDialog(mWaitDialog);
+                            Log.e(TAG + "error", jsonObject.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -224,13 +197,42 @@ public class ShareHostManagerListActivity extends BaseActivity implements OnClic
             JSONArray jsonArray = new JSONArray();
             jsonArray.put(list.get(index).getEngineId());
             String sign = MD5Utils.MD5Encode(aesAccount + jsonArray.toString() + makeShareMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_list", jsonArray.toString());
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", makeShareMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String shareCodeREsult) {
+                    try {
+                        JSONObject jsonShareCode = new JSONObject(shareCodeREsult);
+                        if (jsonShareCode.getInt("status") == 9999) {
+                            makeShareDialog(ShareHostManagerListActivity.this, jsonShareCode.getString("share_code"));
+                        } else {
+                            Toast.makeText(ShareHostManagerListActivity.this, jsonShareCode.getString("error"),Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -276,14 +278,43 @@ public class ShareHostManagerListActivity extends BaseActivity implements OnClic
                 }
             }
             String sign = MD5Utils.MD5Encode(aesAccount + aesAccountc + jsonArray.toString() + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("accountc", aesAccountc);
             xutilsHelper.add("engine_list", jsonArray.toString());
             xutilsHelper.add("method", method);
             xutilsHelper.add("token", token);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(3, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String shareCodeREsult) {
+                    try {
+                        JSONObject jsonShareCode = new JSONObject(shareCodeREsult);
+                        if (jsonShareCode.getInt("status") == 9999) {
+                            Utils.showDialog(ShareHostManagerListActivity.this, "设置成功！");
+                        } else {
+                            Toast.makeText(ShareHostManagerListActivity.this, jsonShareCode.getString("error"),Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

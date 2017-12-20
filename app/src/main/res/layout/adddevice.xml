@@ -46,7 +46,7 @@
                 android:layout_height="wrap_content"
                 app:layout_heightPercent="63.5%"
                 app:layout_widthPercent="100%"
-                android:src="@mipmap/equipment_switch_three"/>
+                />
             <com.zhy.android.percent.support.PercentRelativeLayout
                 android:id="@+id/adddevice_selectroom_rll"
                 android:layout_width="match_parent"

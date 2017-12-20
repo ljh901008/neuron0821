@@ -4,8 +4,6 @@ import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -21,6 +19,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -58,77 +57,7 @@ public class SceneTimingActivity extends BaseActivity implements View.OnClickLis
     private String sceneTime;
     private String mIsCf, mCfTime;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            String result = (String) msg.obj;
-                            Log.e(TAG + "场景设置时间", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
 
-                                final AlertDialog.Builder builder = new AlertDialog.Builder(SceneTimingActivity.this);
-                                View view = View.inflate(SceneTimingActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("设置成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        intent.putExtra("iscf", isCf);
-                                        if ("0".equals(isCf)) {
-                                            intent.putExtra("days", days);
-                                        } else {
-                                            intent.putExtra("days", cfDay);
-                                        }
-                                        setResult(RESULT_OK, intent);
-                                        finish();
-                                        builder.create().dismiss();
-                                    }
-                                });
-                                builder.create().show();
-                            } else {
-                                Utils.showDialog(SceneTimingActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(SceneTimingActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case 2://删除情景模式时间
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "删除情景模式时间", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(SceneTimingActivity.this, jsonObject.getString("error"));
-                            } else {
-                                Utils.showDialog(SceneTimingActivity.this, "删除成功");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -288,7 +217,7 @@ public class SceneTimingActivity extends BaseActivity implements View.OnClickLis
                             e.printStackTrace();
                         }
 
-                    }else if ("2".equals(isCf)) {//自定义
+                    }else if ("1".equals(isCf)) {//自定义
                         cfDay = data.getStringExtra("days");
                         cfName_tv.setText("自定义"+cfDay);
                     }
@@ -321,7 +250,7 @@ public class SceneTimingActivity extends BaseActivity implements View.OnClickLis
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + engineId + setTimeMethod + openTime + repeatDays + repeatId + cfDay + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("contextual_model_id", sceneId);
@@ -332,7 +261,60 @@ public class SceneTimingActivity extends BaseActivity implements View.OnClickLis
             xutils.add("token", token);
             xutils.add("method", setTimeMethod);
             xutils.add("sign", sign);
-            xutils.sendPost(1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        Log.e(TAG + "场景设置时间", result);
+                        JSONObject json = new JSONObject(result);
+                        if (json.getInt("status") == 9999) {
+
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(SceneTimingActivity.this);
+                            View view = View.inflate(SceneTimingActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("设置成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    intent.putExtra("iscf", isCf);
+                                    if ("0".equals(isCf)) {
+                                        intent.putExtra("days", days);
+                                    } else {
+                                        intent.putExtra("days", cfDay);
+                                    }
+                                    setResult(RESULT_OK, intent);
+                                    finish();
+                                    builder.create().dismiss();
+                                }
+                            });
+                            builder.create().show();
+                        } else {
+                            Utils.showDialog(SceneTimingActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(SceneTimingActivity.this, "网络不通", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -389,14 +371,45 @@ public class SceneTimingActivity extends BaseActivity implements View.OnClickLis
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + engineId + delTimeMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("contextual_model_id", sceneId);
             xutils.add("token", token);
             xutils.add("method", delTimeMethod);
             xutils.add("sign", sign);
-            xutils.sendPost(2, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String updateResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "删除情景模式时间", updateResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(updateResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(SceneTimingActivity.this, jsonObject.getString("error"));
+                        } else {
+                            Utils.showDialog(SceneTimingActivity.this, "删除成功");
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

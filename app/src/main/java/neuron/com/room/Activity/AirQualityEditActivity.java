@@ -4,8 +4,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -23,6 +21,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.Calendar;
 
@@ -69,51 +68,7 @@ public class AirQualityEditActivity extends BaseActivity implements View.OnClick
     private String min = "";
     private WaitDialog mWaitDialog;
     private String openTime;
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://设置空气质量监测仪时间
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String setTimeResult = (String) msg.obj;
-                        Log.e(TAG + "设置时间", setTimeResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(setTimeResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(AirQualityEditActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(AirQualityEditActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case 2://修改设备名和房间
-                    if (msg.what == 102) {
-                        String updateResult = (String) msg.obj;
-                        Log.e(TAG + "修改设备名称和房间", updateResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(updateResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(AirQualityEditActivity.this, jsonObject.getString("error"));
-                            } else {
-                                Utils.showDialog(AirQualityEditActivity.this, "修改成功");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -297,7 +252,7 @@ public class AirQualityEditActivity extends BaseActivity implements View.OnClick
             jsonObject.put("controlled_device_serial", "");
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + deviceId + deviceTypeId + engineId + methodUpdateDevice + jsonObject.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("electric_type_id", deviceTypeId);
@@ -306,7 +261,38 @@ public class AirQualityEditActivity extends BaseActivity implements View.OnClick
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodUpdateDevice);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2, this);
+            //xutilsHelper.sendPost(2, this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String updateResult) {
+                    Log.e(TAG + "修改设备名称和房间", updateResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(updateResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(AirQualityEditActivity.this, jsonObject.getString("error"));
+                        } else {
+                            Utils.showDialog(AirQualityEditActivity.this, "修改成功");
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Toast.makeText(AirQualityEditActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -384,7 +370,7 @@ public class AirQualityEditActivity extends BaseActivity implements View.OnClick
             jsonObject.put("contextual_model_id", "");
             jsonObject.put("triggering_condition", "00." + time);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + methodSetTime + jsonObject.toString() + neuronId + "3" + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -393,7 +379,38 @@ public class AirQualityEditActivity extends BaseActivity implements View.OnClick
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodSetTime);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
+            //xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String setTimeResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "设置时间", setTimeResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(setTimeResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(AirQualityEditActivity.this, jsonObject.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(AirQualityEditActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

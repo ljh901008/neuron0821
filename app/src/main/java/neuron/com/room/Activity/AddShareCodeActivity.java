@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
@@ -16,6 +14,7 @@ import android.widget.TextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.MainActivity;
@@ -39,54 +38,6 @@ public class AddShareCodeActivity extends BaseActivity implements View.OnClickLi
     private SharedPreferencesManager sharedPreferencesManager;
     private String account,token, engineId;
     private String shareMetho = "AddSharedEngines";
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        try {
-                            String result = (String) msg.obj;
-                            Log.e(TAG + "分享码", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
-                               /* Utils.showDialogTwo(AddShareCodeActivity.this, "设置分享成功,请在控制主机列表页面设置控制主机", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        Intent intent = new Intent(AddShareCodeActivity.this, HostManagerActivity.class);
-                                        startActivity(intent);
-                                    }
-                                });*/
-                                final AlertDialog builder = new AlertDialog.Builder(AddShareCodeActivity.this).create();
-                                View view = View.inflate(AddShareCodeActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("设置分享成功,请在控制主机列表页面选择控制主机");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        Intent intent = new Intent(AddShareCodeActivity.this, HostManagerActivity.class);
-                                        startActivity(intent);
-                                        builder.dismiss();
-                                    }
-                                });
-                                builder.show();
-                            } else {
-                                Utils.showDialog(AddShareCodeActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                break;
-                default:
-                break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,13 +69,59 @@ public class AddShareCodeActivity extends BaseActivity implements View.OnClickLi
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + shareMetho + shareCode + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.SHAREHOSMANAGER, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.SHAREHOSMANAGER);
             xutils.add("account", aesAccount);
             xutils.add("share_code", shareCode);
             xutils.add("token", token);
             xutils.add("method", shareMetho);
             xutils.add("sign", sign);
-            xutils.sendPost(1, this);
+            ///xutils.sendPost(1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    try {
+                        Log.e(TAG + "分享码", result);
+                        JSONObject json = new JSONObject(result);
+                        if (json.getInt("status") == 9999) {
+
+                            final AlertDialog builder = new AlertDialog.Builder(AddShareCodeActivity.this).create();
+                            View view = View.inflate(AddShareCodeActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("  设置分享成功,请在控制主机列表页面选择控制主机");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener(){
+                                @Override
+                                public void onClick(View view) {
+                                    Intent intent = new Intent(AddShareCodeActivity.this, HostManagerActivity.class);
+                                    startActivity(intent);
+                                    builder.dismiss();
+                                }
+                            });
+                            builder.show();
+                        } else {
+                            Utils.showDialog(AddShareCodeActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

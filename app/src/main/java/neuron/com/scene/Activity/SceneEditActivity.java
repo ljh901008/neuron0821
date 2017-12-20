@@ -3,8 +3,6 @@ package neuron.com.scene.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +18,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import neuron.com.comneuron.BaseActivity;
 import neuron.com.comneuron.MainActivity;
@@ -52,92 +51,7 @@ public class SceneEditActivity extends BaseActivity implements View.OnClickListe
     private String sceneTime;
     private WaitDialog mWaitDialog;
     private int tag = 10;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://场景详情
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String sceneResult = (String) msg.obj;
-                        Log.e(TAG + "场景详情", sceneResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(sceneResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONObject sceneJs = jsonObject.getJSONObject("msg");
-                                sceneId = sceneJs.getString("contextual_model_id");
-                                sceneName = sceneJs.getString("contextual_model_name");
-                                sceneType = sceneJs.getString("contextual_model_type");
-                                sceneImg = sceneJs.getInt("contextual_model_img");
-                                sceneTime = sceneJs.getString("timmer");
 
-                                sceneName_tv.setText(sceneName);
-                                JSONArray cdl = sceneJs.getJSONArray("controlled_device_list");
-                                deviceList = cdl.toString();
-                                sceneDeviceList_tv.setText(String.valueOf(cdl.length()));
-                                JSONArray sList = sceneJs.getJSONArray("switch_list");
-                                swichList = sList.toString();
-                                swich_tv.setText(String.valueOf(sList.length()));
-                                switch (sceneImg) {
-                                    case 1:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_leave_not);
-                                        break;
-                                    case 2:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_meeting_not);
-                                        break;
-                                    case 3:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_movie_not);
-                                        break;
-                                    case 4:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_night_not);
-                                        break;
-                                    case 5:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_party_not);
-                                        break;
-                                    case 6:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_reading_not);
-                                        break;
-                                    case 7:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_get_up_not);
-                                        break;
-                                    case 0:
-                                        sceneImg_iv.setImageResource(R.mipmap.scene_back_not);
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(SceneEditActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case 2:// 修改名称和图标
-                    if (msg.what == 102) {
-                        try {
-                            String result = (String) msg.obj;
-                            Log.e(TAG + "result", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
-                                Utils.showDialog(SceneEditActivity.this,"修改成功");
-                            } else {
-                                Utils.showDialog(SceneEditActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -304,23 +218,94 @@ public class SceneEditActivity extends BaseActivity implements View.OnClickListe
 
     /**
      *      获取场景详情
-     * @param sceneId
+     * @param sceneid
      * @param method
      */
-    private void getSceneData(String sceneId,String method){
+    private void getSceneData(String sceneid,String method){
         setAccount();
         try {
             Utils.showWaitDialog("加载中...", SceneEditActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
-            String sign = MD5Utils.MD5Encode(aesAccount + sceneId + engineId + method + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            String sign = MD5Utils.MD5Encode(aesAccount + sceneid + engineId + method + token + URLUtils.MD5_SIGN, "");
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
-            xutilsHelper.add("contextual_model_id", sceneId);
+            xutilsHelper.add("contextual_model_id", sceneid);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", method);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String sceneResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "场景详情", sceneResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(sceneResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONObject sceneJs = jsonObject.getJSONObject("msg");
+                            sceneId = sceneJs.getString("contextual_model_id");
+                            sceneName = sceneJs.getString("contextual_model_name");
+                            sceneType = sceneJs.getString("contextual_model_type");
+                            sceneImg = sceneJs.getInt("contextual_model_img");
+                            sceneTime = sceneJs.getString("timmer");
+
+                            sceneName_tv.setText(sceneName);
+                            JSONArray cdl = sceneJs.getJSONArray("controlled_device_list");
+                            deviceList = cdl.toString();
+                            sceneDeviceList_tv.setText(String.valueOf(cdl.length()));
+                            JSONArray sList = sceneJs.getJSONArray("switch_list");
+                            swichList = sList.toString();
+                            swich_tv.setText(String.valueOf(sList.length()));
+                            switch (sceneImg) {
+                                case 1:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_leave_not);
+                                    break;
+                                case 2:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_meeting_not);
+                                    break;
+                                case 3:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_movie_not);
+                                    break;
+                                case 4:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_night_not);
+                                    break;
+                                case 5:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_party_not);
+                                    break;
+                                case 6:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_reading_not);
+                                    break;
+                                case 7:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_get_up_not);
+                                    break;
+                                case 0:
+                                    sceneImg_iv.setImageResource(R.mipmap.scene_back_not);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(SceneEditActivity.this, "网络不通", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -357,14 +342,44 @@ public class SceneEditActivity extends BaseActivity implements View.OnClickListe
             jsonObject.put("contextual_model_img", sceneImg);
             jsonObject.put("desc", "");
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + updateSceneMethod + jsonObject.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("msg", jsonObject.toString());
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", updateSceneMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    try {
+                        Log.e(TAG + "result", result);
+                        JSONObject json = new JSONObject(result);
+                        if (json.getInt("status") == 9999) {
+                            Utils.showDialog(SceneEditActivity.this,"修改成功");
+                        } else {
+                            Utils.showDialog(SceneEditActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

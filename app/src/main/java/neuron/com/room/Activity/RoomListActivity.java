@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -26,6 +24,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,88 +59,7 @@ public class RoomListActivity extends BaseActivity implements View.OnClickListen
     private Intent intent;
     private int tag;
     private int isUpdate = 1;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1://房间列表
-                    if (msg.what == 102) {
-                        try {
-                            String homeListResult = (String) msg.obj;
-                            Log.e(TAG+"3333", homeListResult);
-                            JSONObject jsonObject = new JSONObject(homeListResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("room_list");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    roomList = new ArrayList<SY_PopuWBean>();
-                                    SY_PopuWBean sy_popuWBean;
-                                    for (int i = 0; i < length; i++) {
-                                        sy_popuWBean = new SY_PopuWBean();
-                                        JSONObject json = jsonArray.getJSONObject(i);
-                                        String roomname = json.getString("room_name");
-                                        sy_popuWBean.setHomeName(roomname);
-                                        sy_popuWBean.setHomeId(json.getString("room_id"));
-                                        roomList.add(sy_popuWBean);
-                                    }
-                                    Log.e(TAG + "roomList.size", String.valueOf(roomList.size()));
-                                    if (isUpdate == 1) {
-                                        adapter = new RoomListAdapter(RoomListActivity.this, roomList);
-                                        room_lv.setAdapter(adapter);
-                                        isUpdate = 2;
-                                    } else {
-                                        adapter.setList(roomList);
-                                        adapter.notifyDataSetChanged();
-                                    }
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
 
-                    }
-                    break;
-                case 2://删除房间
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "删除房间", deleteResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(deleteResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(RoomListActivity.this, jsonObject.getString("error"));
-                            } else {
-                                Utils.showDialog(RoomListActivity.this, "删除成功");
-                                getHomeList();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 3://更新房间信息
-                    if (msg.what == 102) {
-                        String deleteResult = (String) msg.obj;
-                        Log.e(TAG + "修改房间", deleteResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(deleteResult);
-                            if (jsonObject.getInt("status") != 9999) {
-                                Utils.showDialog(RoomListActivity.this, jsonObject.getString("error"));
-                            } else {
-                                Utils.showDialog(RoomListActivity.this, "修改成功");
-                                getHomeList();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -213,13 +131,64 @@ public class RoomListActivity extends BaseActivity implements View.OnClickListen
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + QUERYHOMELIST + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
             xutilsHelper.add("account",aesAccount);
             xutilsHelper.add("engine_id",engine_id);
             xutilsHelper.add("token",token);
             xutilsHelper.add("method",QUERYHOMELIST);
             xutilsHelper.add("sign",sign);
-            xutilsHelper.sendPost(1,this);
+            //xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String homeListResult) {
+                    try {
+                        Log.e(TAG+"3333", homeListResult);
+                        JSONObject jsonObject = new JSONObject(homeListResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("room_list");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                roomList = new ArrayList<SY_PopuWBean>();
+                                SY_PopuWBean sy_popuWBean;
+                                for (int i = 0; i < length; i++) {
+                                    sy_popuWBean = new SY_PopuWBean();
+                                    JSONObject json = jsonArray.getJSONObject(i);
+                                    String roomname = json.getString("room_name");
+                                    sy_popuWBean.setHomeName(roomname);
+                                    sy_popuWBean.setHomeId(json.getString("room_id"));
+                                    roomList.add(sy_popuWBean);
+                                }
+                                Log.e(TAG + "roomList.size", String.valueOf(roomList.size()));
+                                if (isUpdate == 1) {
+                                    adapter = new RoomListAdapter(RoomListActivity.this, roomList);
+                                    room_lv.setAdapter(adapter);
+                                    isUpdate = 2;
+                                } else {
+                                    adapter.setList(roomList);
+                                    adapter.notifyDataSetChanged();
+                                }
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -245,14 +214,46 @@ public class RoomListActivity extends BaseActivity implements View.OnClickListen
             JSONArray jsonArray = new JSONArray();
             jsonArray.put(roomId);
             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + delRoomMethod + jsonArray.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
             xutilsHelper.add("account",aesAccount);
             xutilsHelper.add("engine_id",engine_id);
             xutilsHelper.add("msg", jsonArray.toString());
             xutilsHelper.add("token",token);
             xutilsHelper.add("method",delRoomMethod);
             xutilsHelper.add("sign",sign);
-            xutilsHelper.sendPost(2,this);
+            //xutilsHelper.sendPost(2,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Log.e(TAG + "删除房间", deleteResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(deleteResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(RoomListActivity.this, jsonObject.getString("error"));
+                        } else {
+                            Utils.showDialog(RoomListActivity.this, "删除成功");
+                            getHomeList();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -281,14 +282,45 @@ public class RoomListActivity extends BaseActivity implements View.OnClickListen
             jsonObject.put("room_name", roomName);
             jsonObject.put("desc", "");
             String sign = MD5Utils.MD5Encode(aesAccount + engine_id + updateRoomMethod + jsonObject.toString() + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.HOUSESET);
             xutilsHelper.add("account",aesAccount);
             xutilsHelper.add("engine_id",engine_id);
             xutilsHelper.add("msg", jsonObject.toString());
             xutilsHelper.add("token",token);
             xutilsHelper.add("method",updateRoomMethod);
             xutilsHelper.add("sign",sign);
-            xutilsHelper.sendPost(3,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String deleteResult) {
+                    Log.e(TAG + "修改房间", deleteResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(deleteResult);
+                        if (jsonObject.getInt("status") != 9999) {
+                            Utils.showDialog(RoomListActivity.this, jsonObject.getString("error"));
+                        } else {
+                            Utils.showDialog(RoomListActivity.this, "修改成功");
+                            getHomeList();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -2,8 +2,6 @@ package neuron.com.room.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
@@ -17,6 +15,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,90 +50,7 @@ public class SceneListActivity extends BaseActivity implements View.OnClickListe
     private SharedPreferencesManager sharedPreferencesManager = null;
     private int index;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1://场景列表
-                    if (msg.what == 102) {
-                        String sceneListResult = (String) msg.obj;
-                        Log.e(TAG + "场景列表",sceneListResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(sceneListResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonMsg = jsonObject.getJSONArray("contextual_model_list");
-                                int length = jsonMsg.length();
-                                if (length > 0) {
-                                    list = new ArrayList<AirQualityBean>();
-                                    AirQualityBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject j = jsonMsg.getJSONObject(i);
-                                        bean = new AirQualityBean();
-                                        bean.setSceneId(j.getString("contextual_model_id"));
-                                        bean.setSceneName(j.getString("contextual_model_name"));
-                                        bean.setSelect(false);
-                                        list.add(bean);
-                                    }
-                                    adapter = new AirQualityAdapter(list, SceneListActivity.this);
-                                    listView.setAdapter(adapter);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2://设定场景
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        String setResult = (String) msg.obj;
-                        Log.e(TAG + "设定场景，警报", setResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(setResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                               /* Utils.showDialogTwo(SceneListActivity.this, "设置成功", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        intent.putExtra("sceneName", list.get(index).getSceneName());
-                                        setResult(RESULT_OK, intent);
-                                        finish();
-                                        dialogInterface.dismiss();
-                                    }
-                                });*/
-                                final AlertDialog builder = new AlertDialog.Builder(SceneListActivity.this).create();
-                                View view = View.inflate(SceneListActivity.this, R.layout.dialog_textview, null);
-                                TextView title = (TextView) view.findViewById(R.id.textView1);
-                                Button button = (Button) view.findViewById(R.id.button1);
-                                title.setText("设置成功");
-                                builder.setView(view);
-                                button.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        intent.putExtra("sceneName", list.get(index).getSceneName());
-                                        setResult(RESULT_OK, intent);
-                                        finish();
-                                        builder.dismiss();
-                                    }
-                                });
-                                builder.show();
-                            } else {
-                                Utils.showDialog(SceneListActivity.this, jsonObject.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        Toast.makeText(SceneListActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -210,7 +126,7 @@ public class SceneListActivity extends BaseActivity implements View.OnClickListe
 
             Log.e(TAG + "数据", aesAccount + ";" + engineId + ";" + methodSetScene + ";" + jsonObject.toString() + ";" + neuronId + ";" + setType + ";" + token);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + methodSetScene + jsonObject.toString() + neuronId + setType + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.GETDEVICELIST_URL);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("engine_id", engineId);
             xutilsHelper.add("neuron_id", neuronId);
@@ -219,7 +135,63 @@ public class SceneListActivity extends BaseActivity implements View.OnClickListe
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", methodSetScene);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(2,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String setResult) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Log.e(TAG + "设定场景，警报", setResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(setResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                               /* Utils.showDialogTwo(SceneListActivity.this, "设置成功", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        intent.putExtra("sceneName", list.get(index).getSceneName());
+                                        setResult(RESULT_OK, intent);
+                                        finish();
+                                        dialogInterface.dismiss();
+                                    }
+                                });*/
+                            final AlertDialog builder = new AlertDialog.Builder(SceneListActivity.this).create();
+                            View view = View.inflate(SceneListActivity.this, R.layout.dialog_textview, null);
+                            TextView title = (TextView) view.findViewById(R.id.textView1);
+                            Button button = (Button) view.findViewById(R.id.button1);
+                            title.setText("设置成功");
+                            builder.setView(view);
+                            button.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    intent.putExtra("sceneName", list.get(index).getSceneName());
+                                    setResult(RESULT_OK, intent);
+                                    finish();
+                                    builder.dismiss();
+                                }
+                            });
+                            builder.show();
+                        } else {
+                            Utils.showDialog(SceneListActivity.this, jsonObject.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    Toast.makeText(SceneListActivity.this, "网络不通", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -240,13 +212,57 @@ public class SceneListActivity extends BaseActivity implements View.OnClickListe
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + methodSceneList + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("token", token);
             xutils.add("method", methodSceneList);
             xutils.add("sign", sign);
-            xutils.sendPost(1, this);
+            //xutils.sendPost(1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String sceneListResult) {
+                    Log.e(TAG + "场景列表",sceneListResult);
+                    try {
+                        JSONObject jsonObject = new JSONObject(sceneListResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonMsg = jsonObject.getJSONArray("contextual_model_list");
+                            int length = jsonMsg.length();
+                            if (length > 0) {
+                                list = new ArrayList<AirQualityBean>();
+                                AirQualityBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject j = jsonMsg.getJSONObject(i);
+                                    bean = new AirQualityBean();
+                                    bean.setSceneId(j.getString("contextual_model_id"));
+                                    bean.setSceneName(j.getString("contextual_model_name"));
+                                    bean.setSelect(false);
+                                    list.add(bean);
+                                }
+                                adapter = new AirQualityAdapter(list, SceneListActivity.this);
+                                listView.setAdapter(adapter);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

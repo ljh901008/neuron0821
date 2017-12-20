@@ -5,8 +5,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -25,6 +23,7 @@ import com.handmark.pulltorefresh.library.PullToRefreshScrollView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,117 +56,6 @@ public class AlertTwoActivity extends BaseActivity implements View.OnClickListen
     private boolean isFirst = true;
     private int mPosition = 100;
     private Intent intent;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch (arg1) {
-                case 1:
-                    if (msg.what == 102) {
-                        String msgResult = (String) msg.obj;
-                        Log.e(TAG + "消息列表", msgResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(msgResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<Map<String, String>>();
-                                    Map<String, String> map;
-                                    for (int i = 0; i < length; i++) {
-                                        map = new HashMap<String, String>();
-                                        JSONObject jsonMsg = jsonArray.getJSONObject(i);
-                                        map.put("time", jsonMsg.getString("msg_time"));
-                                        map.put("content", jsonMsg.getString("msg_content"));
-                                        map.put("msgId", jsonMsg.getString("msg_id"));
-                                        list.add(map);
-                                    }
-                                        adapter = new AlertAdapter(list, AlertTwoActivity.this);
-                                        listView.setAdapter(adapter);
-                                }
-                            } else {
-                                Toast.makeText(AlertTwoActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 2:
-                    if (msg.what == 102) {
-                        String changeResult = (String) msg.obj;
-                        Log.e(TAG + "删除消息",changeResult);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(changeResult);
-                            if (jsonDelete.getInt("status") == 9999) {
-                                Toast.makeText(AlertTwoActivity.this, "删除成功",Toast.LENGTH_LONG).show();
-                                list.remove(mPosition);
-                                adapter.notifyDataSetChanged();
-                            } else {
-                                Toast.makeText(AlertTwoActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 3:
-                    if (msg.what == 102) {
-                        String msgResult = (String) msg.obj;
-                        Log.e(TAG + "消息列表", msgResult);
-                        try {
-                            JSONObject jsonObject = new JSONObject(msgResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list.clear();
-                                    Map<String, String> map;
-                                    for (int i = 0; i < length; i++) {
-                                        map = new HashMap<String, String>();
-                                        JSONObject jsonMsg = jsonArray.getJSONObject(i);
-                                        map.put("time", jsonMsg.getString("msg_time"));
-                                        map.put("content", jsonMsg.getString("msg_content"));
-                                        map.put("msgId", jsonMsg.getString("msg_id"));
-                                        list.add(map);
-                                    }
-                                    adapter.setList(list);
-                                    adapter.notifyDataSetChanged();
-                                }
-                            } else {
-                                Toast.makeText(AlertTwoActivity.this, "网络不通", Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                case 4:
-                    if (msg.what == 102) {
-                        String changeResult = (String) msg.obj;
-                        Log.e(TAG + "删除消息",changeResult);
-                        try {
-                            JSONObject jsonDelete = new JSONObject(changeResult);
-                            if (jsonDelete.getInt("status") == 9999) {
-                                if (list != null) {
-                                    Toast.makeText(AlertTwoActivity.this, "删除成功",Toast.LENGTH_LONG).show();
-                                    list.clear();
-                                    adapter.notifyDataSetChanged();
-                                }
-                            } else {
-                                Toast.makeText(AlertTwoActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -257,14 +145,89 @@ public class AlertTwoActivity extends BaseActivity implements View.OnClickListen
             Log.e(TAG + "最后一条消息的id和时间", "id" + lastMsgId + "时间" + lastMsgTime);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + lastMsgId + lastMsgTime + getMsgMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("last_msg_id", lastMsgId);
             xutilsHelper.add("last_msg_time", lastMsgTime);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", getMsgMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String msgResult) {
+                    switch(arg1){
+                        case 1:
+                            try {
+                                Log.e(TAG + "消息列表", msgResult);
+                                JSONObject jsonObject = new JSONObject(msgResult);
+                                if (jsonObject.getInt("status") == 9999) {
+                                    JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                                    int length = jsonArray.length();
+                                    if (length > 0) {
+                                        list = new ArrayList<Map<String, String>>();
+                                        Map<String, String> map;
+                                        for (int i = 0; i < length; i++) {
+                                            map = new HashMap<String, String>();
+                                            JSONObject jsonMsg = jsonArray.getJSONObject(i);
+                                            map.put("time", jsonMsg.getString("msg_time"));
+                                            map.put("content", jsonMsg.getString("msg_content"));
+                                            map.put("msgId", jsonMsg.getString("msg_id"));
+                                            list.add(map);
+                                        }
+                                        adapter = new AlertAdapter(list, AlertTwoActivity.this);
+                                        listView.setAdapter(adapter);
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case 3:
+                            try {
+                                JSONObject jsonObject = new JSONObject(msgResult);
+                                if (jsonObject.getInt("status") == 9999) {
+                                    JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                                    int length = jsonArray.length();
+                                    if (length > 0) {
+                                        list.clear();
+                                        Map<String, String> map;
+                                        for (int i = 0; i < length; i++) {
+                                            map = new HashMap<String, String>();
+                                            JSONObject jsonMsg = jsonArray.getJSONObject(i);
+                                            map.put("time", jsonMsg.getString("msg_time"));
+                                            map.put("content", jsonMsg.getString("msg_content"));
+                                            map.put("msgId", jsonMsg.getString("msg_id"));
+                                            list.add(map);
+                                        }
+                                        adapter.setList(list);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                        break;
+                    }
+
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -279,13 +242,68 @@ public class AlertTwoActivity extends BaseActivity implements View.OnClickListen
         try {
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + delMsgMethod + msgId + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other, handler);
+            XutilsHelper xutilsHelper = new XutilsHelper(URLUtils.Other);
             xutilsHelper.add("account", aesAccount);
             xutilsHelper.add("msg_id", msgId);
             xutilsHelper.add("token", token);
             xutilsHelper.add("method", delMsgMethod);
             xutilsHelper.add("sign", sign);
-            xutilsHelper.sendPost(arg1,this);
+            //xutilsHelper.sendPost(arg1,this);
+            xutilsHelper.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String s) {
+                    Log.e(TAG + "删除消息",s);
+                    switch(arg1){
+                        case 2://删除
+                            try {
+                                JSONObject jsonDelete = new JSONObject(s);
+                                if (jsonDelete.getInt("status") == 9999) {
+                                    Toast.makeText(AlertTwoActivity.this, "删除成功",Toast.LENGTH_LONG).show();
+                                    list.remove(mPosition);
+                                    adapter.notifyDataSetChanged();
+                                } else {
+                                    Toast.makeText(AlertTwoActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        break;
+                        case 4://清空
+                            try {
+                                JSONObject jsonDelete = new JSONObject(s);
+                                if (jsonDelete.getInt("status") == 9999) {
+                                    if (list != null) {
+                                        Toast.makeText(AlertTwoActivity.this, "删除成功",Toast.LENGTH_LONG).show();
+                                        list.clear();
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                } else {
+                                    Toast.makeText(AlertTwoActivity.this, jsonDelete.getString("error"),Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        default:
+                        break;
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

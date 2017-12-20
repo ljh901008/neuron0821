@@ -2,8 +2,6 @@ package neuron.com.scene.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
@@ -16,6 +14,7 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,104 +50,7 @@ public class SceneBindSwichListActivity extends BaseActivity implements View.OnC
     private String bindSwichMethod = "AddConditionTriggering";
     private TextView title_tv;
     private WaitDialog mWaitDialog;
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int arg1 = msg.arg1;
-            switch(arg1){
-                case 1:
-                    if (msg.what == 102) {
-                        String swichResult = (String) msg.obj;
-                        Log.e(TAG + "开关列表", swichResult);
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            JSONObject jsonObject = new JSONObject(swichResult);
-                            if (jsonObject.getInt("status") == 9999) {
-                                JSONArray jsonArray = jsonObject.getJSONArray("msg");
-                                int length = jsonArray.length();
-                                if (length > 0) {
-                                    list = new ArrayList<SwichBean>();
-                                    SwichBean bean;
-                                    for (int i = 0; i < length; i++) {
-                                        JSONObject msgjson = jsonArray.getJSONObject(i);
-                                        bean = new SwichBean();
-                                        bean.setSwichId(msgjson.getString("neuron_id"));
-                                        bean.setSwichKeyName(msgjson.getString("key_name"));
-                                        bean.setSwichKeyId(msgjson.getString("key_id"));
-                                        if (msgjson.has("room_name")) {
-                                            bean.setSwichRoom(msgjson.getString("room_name"));
-                                        }
-                                        bean.setSelect(false);
-                                        list.add(bean);
-                                    }
-                                    adapter = new SceneSwichListAdapter(SceneBindSwichListActivity.this, list);
-                                    listView.setAdapter(adapter);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
 
-                    }
-                    break;
-                case 2://绑定开关
-                    if (msg.what == 102) {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                        try {
-                            String result = (String) msg.obj;
-                            Log.e(TAG + "绑定开关", result);
-                            JSONObject json = new JSONObject(result);
-                            if (json.getInt("status") == 9999) {
-                                final JSONArray jsonArray = new JSONArray();
-                                for (int i = 0; i < list.size(); i++) {
-                                    if (list.get(i).isSelect()) {
-                                        JSONObject jsonObject = new JSONObject();
-                                        try {
-                                            jsonObject.put("key_name", list.get(i).getSwichKeyName());
-                                            jsonObject.put("neuron_id", list.get(i).getSwichId());
-                                            jsonObject.put("key_id", list.get(i).getSwichKeyId());
-                                            jsonObject.put("room_name", list.get(i).getSwichRoom());
-                                            jsonArray.put(jsonObject);
-                                            final AlertDialog builder = new AlertDialog.Builder(SceneBindSwichListActivity.this).create();
-                                            View view = View.inflate(SceneBindSwichListActivity.this, R.layout.dialog_textview, null);
-                                            TextView title = (TextView) view.findViewById(R.id.textView1);
-                                            Button button = (Button) view.findViewById(R.id.button1);
-                                            title.setText("绑定成功");
-                                            builder.setView(view);
-                                            button.setOnClickListener(new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View view) {
-                                                    intent.putExtra("swichlist", jsonArray.toString());
-                                                    setResult(RESULT_OK, intent);
-                                                    builder.dismiss();
-                                                    SceneBindSwichListActivity.this.finish();
-                                                }
-                                            });
-                                            builder.show();
-                                        } catch (JSONException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }
-
-                            } else {
-                                Utils.showDialog(SceneBindSwichListActivity.this, json.getString("error"));
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Utils.dismissWaitDialog(mWaitDialog);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -198,7 +100,7 @@ public class SceneBindSwichListActivity extends BaseActivity implements View.OnC
                     }
                 }
                 if (jsonA.length() > 0) {
-                    bindSwich(bindSwichMethod, 2, jsonA.toString());
+                    bindSwich(bindSwichMethod, jsonA.toString());
                 } else {
                     Utils.showDialog(SceneBindSwichListActivity.this,"请选择要绑定的开关");
                 }
@@ -216,14 +118,62 @@ public class SceneBindSwichListActivity extends BaseActivity implements View.OnC
             Utils.showWaitDialog("加载中...", SceneBindSwichListActivity.this,mWaitDialog);
             String aesAccount = AESOperator.encrypt(account, URLUtils.AES_SIGN);
             String sign = MD5Utils.MD5Encode(aesAccount + sceneId + engineId + swichMethod + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("contextual_model_id", sceneId);
             xutils.add("token", token);
             xutils.add("method", swichMethod);
             xutils.add("sign", sign);
-            xutils.sendPost(1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String swichResult) {
+                    Log.e(TAG + "开关列表", swichResult);
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        JSONObject jsonObject = new JSONObject(swichResult);
+                        if (jsonObject.getInt("status") == 9999) {
+                            JSONArray jsonArray = jsonObject.getJSONArray("msg");
+                            int length = jsonArray.length();
+                            if (length > 0) {
+                                list = new ArrayList<SwichBean>();
+                                SwichBean bean;
+                                for (int i = 0; i < length; i++) {
+                                    JSONObject msgjson = jsonArray.getJSONObject(i);
+                                    bean = new SwichBean();
+                                    bean.setSwichId(msgjson.getString("neuron_id"));
+                                    bean.setSwichKeyName(msgjson.getString("key_name"));
+                                    bean.setSwichKeyId(msgjson.getString("key_id"));
+                                    if (msgjson.has("room_name")) {
+                                        bean.setSwichRoom(msgjson.getString("room_name"));
+                                    }
+                                    bean.setSelect(false);
+                                    list.add(bean);
+                                }
+                                adapter = new SceneSwichListAdapter(SceneBindSwichListActivity.this, list);
+                                listView.setAdapter(adapter);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -243,9 +193,9 @@ public class SceneBindSwichListActivity extends BaseActivity implements View.OnC
     /**
      *   添加场景开关
      * @param Method
-     * @param arg1
+     *
      */
-    private void bindSwich(String Method,int arg1,String swichList){
+    private void bindSwich(String Method,String swichList){
         setAccount();
         Utils.showWaitDialog("加载中...",SceneBindSwichListActivity.this,mWaitDialog);
         try {
@@ -253,14 +203,76 @@ public class SceneBindSwichListActivity extends BaseActivity implements View.OnC
 
             Log.e(TAG + "绑定开关",swichList.toString());
             String sign = MD5Utils.MD5Encode(aesAccount + engineId + Method + swichList + token + URLUtils.MD5_SIGN, "");
-            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL, handler);
+            XutilsHelper xutils = new XutilsHelper(URLUtils.GETHOMELIST_URL);
             xutils.add("account", aesAccount);
             xutils.add("engine_id", engineId);
             xutils.add("msg", swichList);
             xutils.add("token", token);
             xutils.add("method", Method);
             xutils.add("sign", sign);
-            xutils.sendPost(arg1, this);
+            xutils.sendPost2(new Callback.CommonCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                    try {
+                        Log.e(TAG + "绑定开关", result);
+                        JSONObject json = new JSONObject(result);
+                        if (json.getInt("status") == 9999) {
+                            final JSONArray jsonArray = new JSONArray();
+                            for (int i = 0; i < list.size(); i++) {
+                                if (list.get(i).isSelect()) {
+                                    JSONObject jsonObject = new JSONObject();
+                                    try {
+                                        jsonObject.put("key_name", list.get(i).getSwichKeyName());
+                                        jsonObject.put("neuron_id", list.get(i).getSwichId());
+                                        jsonObject.put("key_id", list.get(i).getSwichKeyId());
+                                        jsonObject.put("room_name", list.get(i).getSwichRoom());
+                                        jsonArray.put(jsonObject);
+                                        final AlertDialog builder = new AlertDialog.Builder(SceneBindSwichListActivity.this).create();
+                                        View view = View.inflate(SceneBindSwichListActivity.this, R.layout.dialog_textview, null);
+                                        TextView title = (TextView) view.findViewById(R.id.textView1);
+                                        Button button = (Button) view.findViewById(R.id.button1);
+                                        title.setText("绑定成功");
+                                        builder.setView(view);
+                                        button.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                intent.putExtra("swichlist", jsonArray.toString());
+                                                setResult(RESULT_OK, intent);
+                                                builder.dismiss();
+                                                SceneBindSwichListActivity.this.finish();
+                                            }
+                                        });
+                                        builder.show();
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+
+                        } else {
+                            Utils.showDialog(SceneBindSwichListActivity.this, json.getString("error"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable, boolean b) {
+                    Utils.dismissWaitDialog(mWaitDialog);
+                }
+
+                @Override
+                public void onCancelled(CancelledException e) {
+
+                }
+
+                @Override
+                public void onFinished() {
+
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
